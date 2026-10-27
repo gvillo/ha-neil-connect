@@ -94,6 +94,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         self._client: BleakClient | None = None
         self._lock = asyncio.Lock()
         self._state = NeilState()
+        self._logged_echo = False
         self.device_info = DeviceInfo(
             identifiers={(DOMAIN, self.address)},
             connections={(CONNECTION_BLUETOOTH, self.address)},
@@ -111,10 +112,15 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             except CONNECTION_ERRORS as err:
                 await self._drop_client()
                 raise UpdateFailed(f"Neil climatizador unavailable: {err}") from err
-            if len(power) < FRAME_LENGTH:
+            if self._is_echo(READ_POWER, power):
+                self._log_echo(power)
+            elif len(power) < FRAME_LENGTH:
                 raise UpdateFailed(f"Short power frame ({len(power)} bytes)")
-            self._apply_power(power)
-            if len(timer) >= FRAME_LENGTH:
+            else:
+                self._apply_power(power)
+            if self._is_echo(READ_TIMER, timer):
+                self._log_echo(timer)
+            elif len(timer) >= FRAME_LENGTH:
                 self._apply_timer(timer)
             else:
                 _LOGGER.debug("Short timer frame %s", timer.hex())
@@ -137,14 +143,8 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
                 state.bulb_on if bulb_on is None else bulb_on,
             )
             data = await self._command(frame)
-            if len(data) >= FRAME_LENGTH:
-                self._apply_power(data)
-                self.async_set_updated_data(self._state)
-            if len(data) < FRAME_LENGTH or data[0] != 0:
-                _LOGGER.warning("Power command not acknowledged: %s", data.hex())
-                raise HomeAssistantError(
-                    "Neil climatizador did not acknowledge the power command"
-                )
+            self._accept_power_reply(frame, data)
+            self.async_set_updated_data(self._state)
 
     async def async_set_timer(self, on: bool, hours: int) -> None:
         """Write the timer. Zero hours is sent as timer off."""
@@ -152,15 +152,10 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             on = False
             hours = 0
         async with self._lock:
-            data = await self._command(timer_frame(on, hours))
-            if len(data) >= FRAME_LENGTH:
-                self._apply_timer(data)
-                self.async_set_updated_data(self._state)
-            if len(data) < FRAME_LENGTH or data[0] != 0:
-                _LOGGER.warning("Timer command not acknowledged: %s", data.hex())
-                raise HomeAssistantError(
-                    "Neil climatizador did not acknowledge the timer command"
-                )
+            frame = timer_frame(on, hours)
+            data = await self._command(frame)
+            self._accept_timer_reply(frame, data)
+            self.async_set_updated_data(self._state)
 
     async def async_shutdown(self) -> None:
         """Stop polling and drop the GATT connection."""
@@ -253,6 +248,88 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
     def _on_disconnect(self, _client: BleakClient) -> None:
         """Bleak disconnected us. The next poll reconnects."""
         _LOGGER.debug("Disconnected from %s", self.address)
+
+    def _log_echo(self, frame: bytes) -> None:
+        """The live peripheral reads back the request. Do not parse those 1s."""
+        if self._logged_echo:
+            _LOGGER.debug("Ignoring echoed frame %s", frame.hex())
+            return
+        self._logged_echo = True
+        _LOGGER.warning(
+            "Neil read back the request unchanged (%s). "
+            "That is not device state; filler 0x01 bytes were turning every control on",
+            frame.hex(),
+        )
+
+    @staticmethod
+    def _is_echo(request: bytes, response: bytes) -> bool:
+        """Return True when the GATT read is the frame we just wrote."""
+        return response == request
+
+    def _accept_power_reply(self, request: bytes, response: bytes) -> None:
+        """Apply a power reply. An echo still means the write was accepted."""
+        if self._is_echo(request, response):
+            _LOGGER.debug("Power write echoed (%s); keeping the commanded state", response.hex())
+            self._apply_power_command(request)
+            return
+        if len(response) < FRAME_LENGTH:
+            _LOGGER.warning("Short power reply %s", response.hex())
+            raise HomeAssistantError("Neil climatizador returned a short power frame")
+        if response[0] != 0:
+            _LOGGER.debug(
+                "Power reply byte0 is %s, parsing bytes 1-5",
+                response[:1].hex(),
+            )
+        self._apply_power(response)
+
+    def _accept_timer_reply(self, request: bytes, response: bytes) -> None:
+        """Apply a timer reply. An echo still means the write was accepted."""
+        if self._is_echo(request, response):
+            _LOGGER.debug("Timer write echoed (%s); keeping the commanded state", response.hex())
+            self._apply_timer_command(request)
+            return
+        if len(response) < FRAME_LENGTH:
+            _LOGGER.warning("Short timer reply %s", response.hex())
+            raise HomeAssistantError("Neil climatizador returned a short timer frame")
+        if response[0] != 0:
+            _LOGGER.debug(
+                "Timer reply byte0 is %s, parsing bytes 1-5",
+                response[:1].hex(),
+            )
+        self._apply_timer(response)
+
+    def _apply_power_command(self, frame: bytes) -> None:
+        """Store fan, speed, pump, and light from a power write.
+
+        Byte 5 of a write is the constant 1, not the water level.
+        """
+        fan_on = frame[1] == 1
+        speed = frame[2]
+        if speed > SPEED_MAX:
+            speed = SPEED_MAX
+        if 1 <= frame[2] <= SPEED_MAX:
+            last_speed = frame[2]
+        else:
+            last_speed = self._state.last_speed
+        self._state = replace(
+            self._state,
+            fan_on=fan_on,
+            speed=speed,
+            pump_on=frame[3] == 1,
+            bulb_on=frame[4] == 1,
+            last_speed=last_speed,
+        )
+
+    def _apply_timer_command(self, frame: bytes) -> None:
+        """Store the timer setpoint from a timer write.
+
+        Bytes 3-5 of a write are the constant 1, not the remaining time.
+        """
+        self._state = replace(
+            self._state,
+            timer_on=frame[1] == 1,
+            timer_selected_hours=frame[2],
+        )
 
     def _apply_power(self, frame: bytes) -> None:
         """Store power bytes. Remember the last non-zero speed for turn-on."""
