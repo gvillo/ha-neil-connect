@@ -186,7 +186,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         return data
 
     async def _ensure_connected(self) -> None:
-        """Connect and present a saved key that starts with 0x51."""
+        """Connect, write the Q key, and wait for an R reply."""
         if self._client is not None and self._client.is_connected:
             return
         await self._drop_client()
@@ -218,20 +218,68 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             await self._drop_client()
             raise
 
+    def _presentable_key(self) -> bytes:
+        """Return the Q buffer the app writes. Never log it.
+
+        The app persists the buffer whose first byte is Q (`0x51`). R (`0x52`)
+        is only a valid reply to that write, not a key. Older builds stored
+        the R frame and then skipped the handshake, so the peripheral echoed
+        later commands without running them.
+        """
+        key = self._key
+        if len(key) < 2 or all(byte == 0 for byte in key[1:]):
+            raise BleakError("Neil access key is missing; pair again from the remote")
+        if key[0] == KEY_MARKER:
+            return key
+        if key[0] in (ACCEPTED_MARKER, PAIR_MARKER):
+            rewritten = bytearray(key)
+            rewritten[0] = KEY_MARKER
+            return bytes(rewritten)
+        raise BleakError("Neil access key is not a pairing key; pair again from the remote")
+
     async def _present_key(self, client: BleakClient) -> None:
-        """Write the saved key when it is a Q payload. Do not log the key."""
-        if not self._key or self._key[0] != KEY_MARKER:
-            return
-        _LOGGER.debug("Presenting access key len %d", len(self._key))
-        await client.write_gatt_char(CHAR_UUID, self._key, response=True)
-        await asyncio.sleep(PAIR_DELAY_SECONDS)
-        response = bytes(await client.read_gatt_char(CHAR_UUID))
+        """Write Q, wait 1s, read. Commands wait until the reply is R.
+
+        Matches `connected()` in Neil Connect 2.2.0. A P reply is flipped
+        back to Q and written once more. Any other marker drops the session.
+        """
+        key = self._presentable_key()
+        _LOGGER.debug("Presenting access key len %d", len(key))
+        response = await self._write_key(client, key)
+        if response[:1] == bytes((PAIR_MARKER,)):
+            retried = bytearray(response)
+            retried[0] = KEY_MARKER
+            key = bytes(retried)
+            response = await self._write_key(client, key)
         marker = response[0] if response else None
         _LOGGER.debug(
             "Access key response marker %s len %d",
             hex(marker) if marker is not None else "none",
             len(response),
         )
+        if marker != ACCEPTED_MARKER:
+            raise BleakError(
+                "Neil rejected the access key. Power the unit off, hold + and − "
+                "for 5 seconds, and pair again"
+            )
+        if self._key != key:
+            self._key = key
+            self._store_key(key)
+
+    async def _write_key(self, client: BleakClient, key: bytes) -> bytes:
+        """Write the key with response and read it back after the app's 1s wait."""
+        await client.write_gatt_char(CHAR_UUID, key, response=True)
+        await asyncio.sleep(PAIR_DELAY_SECONDS)
+        return bytes(await client.read_gatt_char(CHAR_UUID))
+
+    def _store_key(self, key: bytes) -> None:
+        """Persist a corrected Q key. The bytes are not logged."""
+        entry = self.config_entry
+        if entry is None:
+            return
+        data = dict(entry.data)
+        data[CONF_ACCESS_KEY] = list(key)
+        self.hass.config_entries.async_update_entry(entry, data=data)
 
     async def _drop_client(self) -> None:
         """Disconnect without logging the key."""
@@ -439,8 +487,10 @@ async def _access_key_from_payload(client: BleakClient, payload: bytes) -> bytes
         if response_marker != ACCEPTED_MARKER:
             raise PairingAbortedError
         return stored
-    if marker in (KEY_MARKER, ACCEPTED_MARKER):
+    if marker == KEY_MARKER:
         return bytes(payload)
+    if marker == ACCEPTED_MARKER:
+        raise PairingAbortedError
     if all(byte == 0 for byte in payload[1:]):
         raise PairingAbortedError
     _LOGGER.debug("Refusing pairing payload with marker %s", hex(marker))

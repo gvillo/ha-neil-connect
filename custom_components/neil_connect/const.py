@@ -1,8 +1,11 @@
 """Constants and frame codec for Neil Connect.
 
-Opcodes are the on-wire byte 0. The app's read helper adds 2 to an internal
-id; these values are already the bytes to send. Firmware opcodes 5 and 8 are
-unused.
+Opcodes are the on-wire byte 0. Neil Connect 2.2.0 has two equipment
+tables. The one `tryAutoConnect` installs before every saved-key session is
+SET_POWER 1, SET_TIMER 2, STATUS_POWER 1, STATUS_TIMER 2. `arrayConsulta`
+then adds 2, so status reads go out as 3 and 4. The exported
+DEFAULT_EQUIPMENT table (STATUS_POWER 3) is overwritten on that path and is
+not what the app polls with. Firmware reads are unused.
 """
 
 from __future__ import annotations

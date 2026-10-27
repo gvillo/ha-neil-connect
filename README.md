@@ -6,7 +6,7 @@
 
 Home Assistant integration for Neil climatizadores that speak the MAXICLIMA BLE GATT protocol from Neil Connect 2.2.0 (`br.com.neil.app`).
 
-This is a [HACS](https://hacs.xyz/) custom repository. It is not part of Home Assistant core and it is not in the default HACS store. The wire format is from static analysis of that app's Hermes bundle. A live peripheral reads back the request instead of an ack of `0`, so those echoed frames are not used as state.
+This is a [HACS](https://hacs.xyz/) custom repository. It is not part of Home Assistant core and it is not in the default HACS store. The wire format is from Neil Connect 2.2.0. A command is accepted when the follow-up read is 6 bytes and byte 0 is not `0`. A status read that comes back equal to the query is not device state.
 
 ## Controls
 
@@ -28,11 +28,11 @@ On the remote: power off, then hold `+` and `−` for 5 seconds until the Blueto
 
 On setup the integration reads the characteristic:
 
-- `P` (`0x50`) is a pairing payload. The first byte is set to `Q` (`0x51`), the buffer is stored, written back, and the follow-up read must be `R` (`0x52`)
-- `Q` or `R` is stored as the key
+- `P` (`0x50`) is a pairing payload. The first byte is set to `Q` (`0x51`), that buffer is stored, written back, and the follow-up read must be `R` (`0x52`)
+- `Q` is stored as the key. `R` is only the reply to writing `Q`, not a key
 - Anything else aborts. The remote has to be in pair mode, or another phone is still connected
 
-The key is saved in the config entry as a list of integers and written again on later connections when it starts with `0x51`. It is not logged.
+The key is saved in the config entry as a list of integers. Every later connection writes that `Q` buffer, waits 1 second, and reads. Fan and timer commands are sent only after the reply is `R`. The key is not logged.
 
 ## Example power frame
 
@@ -51,7 +51,7 @@ Fan on, speed 4, cooling on, light off:
 | 4 | 0 | light off |
 | 5 | 1 | fixed |
 
-A write is acknowledged when the follow-up read is 6 bytes and byte 0 is `0`. Status reads are parsed from bytes 1–5 even when byte 0 is not `0`. Enable debug logs for `custom_components.neil_connect` to see the raw frames.
+The app rejects a command reply whose first byte is `0` or whose length is not 6. A 6-byte reply with any other first byte is success, and bytes 1–5 are the state. Status polls use opcodes 3 and 4 (`arrayConsulta` adds 2 to internal ids 1 and 2). Enable debug logs for `custom_components.neil_connect` to see the raw frames. The log line is the marker and the length, not the key.
 
 ## BLE
 
