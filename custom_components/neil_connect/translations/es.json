@@ -18,6 +18,17 @@
       "cannot_connect": "No se pudo conectar al climatizador. Puede estar fuera de alcance, o puede que otro teléfono siga conectado.",
       "pairing_failed": "El control remoto tiene que estar en modo de emparejamiento (mantené + y \u2212 durante 5 segundos con el equipo apagado). Puede que otro teléfono siga conectado."
     },
+    "options": {
+      "step": {
+        "init": {
+          "title": "Neil Connect",
+          "description": "Opcional. El climatizador no tiene sonda de temperatura. El sensor que elijas se muestra en la tarjeta de clima y no se manda al equipo. Dejalo vac\u00edo para no mostrar temperatura.",
+          "data": {
+            "temperature_sensor": "Temperatura ambiente"
+          }
+        }
+      }
+    },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured%]",
       "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",

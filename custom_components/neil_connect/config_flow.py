@@ -11,10 +11,24 @@ from homeassistant.components.bluetooth import (
     BluetoothServiceInfoBleak,
     async_discovered_service_info,
 )
-from homeassistant.config_entries import ConfigFlow, ConfigFlowResult
+from homeassistant.config_entries import (
+    ConfigEntry,
+    ConfigFlow,
+    ConfigFlowResult,
+    OptionsFlow,
+)
 from homeassistant.const import CONF_ADDRESS
+from homeassistant.core import callback
+from homeassistant.helpers.selector import EntitySelector, EntitySelectorConfig
 
-from .const import CONF_ACCESS_KEY, DEFAULT_TITLE, DOMAIN, LOCAL_NAME_MARK, SERVICE_UUID
+from .const import (
+    CONF_ACCESS_KEY,
+    CONF_TEMPERATURE_SENSOR,
+    DEFAULT_TITLE,
+    DOMAIN,
+    LOCAL_NAME_MARK,
+    SERVICE_UUID,
+)
 from .coordinator import CONNECTION_ERRORS, PairingAbortedError, async_pair
 
 _LOGGER = logging.getLogger(__name__)
@@ -147,4 +161,46 @@ class NeilConnectConfigFlow(ConfigFlow, domain=DOMAIN):
                 CONF_ADDRESS: info.address,
                 CONF_ACCESS_KEY: self._key,
             },
+        )
+
+    @staticmethod
+    @callback
+    def async_get_options_flow(
+        config_entry: ConfigEntry,
+    ) -> NeilConnectOptionsFlow:
+        """Room temperature is optional and is not sent to the device."""
+        return NeilConnectOptionsFlow()
+
+
+class NeilConnectOptionsFlow(OptionsFlow):
+    """Pick a Home Assistant sensor to show as the room temperature."""
+
+    async def async_step_init(
+        self, user_input: dict[str, Any] | None = None
+    ) -> ConfigFlowResult:
+        """Show the temperature sensor selector."""
+        if user_input is not None:
+            options = dict(self.config_entry.options)
+            sensor = user_input.get(CONF_TEMPERATURE_SENSOR) or None
+            if sensor:
+                options[CONF_TEMPERATURE_SENSOR] = sensor
+            else:
+                options.pop(CONF_TEMPERATURE_SENSOR, None)
+            return self.async_create_entry(data=options)
+
+        schema = probatio.Schema(
+            {
+                probatio.Optional(CONF_TEMPERATURE_SENSOR): EntitySelector(
+                    EntitySelectorConfig(
+                        domain="sensor",
+                        device_class="temperature",
+                    )
+                )
+            }
+        )
+        return self.async_show_form(
+            step_id="init",
+            data_schema=self.add_suggested_values_to_schema(
+                schema, dict(self.config_entry.options)
+            ),
         )

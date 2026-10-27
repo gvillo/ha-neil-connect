@@ -15,6 +15,7 @@ SERVICE_UUID: Final = "b5180b36-e157-47a9-aeba-48a403cdb78a"
 CHAR_UUID: Final = "44df0f65-5724-4b6f-a95b-5e4379ebac2a"
 
 CONF_ACCESS_KEY: Final = "access_key"
+CONF_TEMPERATURE_SENSOR: Final = "temperature_sensor"
 
 DEFAULT_TITLE: Final = "Neil climatizador"
 LOCAL_NAME_MARK: Final = "MAXICLIMA"

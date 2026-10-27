@@ -10,7 +10,7 @@ This is a [HACS](https://hacs.xyz/) custom repository. It is not part of Home As
 
 ## Controls
 
-- Climate: **Off**, **Fan only**, or **Cool**. Cool is the fan plus the evaporative pump. Fan speeds on that entity are 1–10. Off stops the fan and the pump and leaves the light alone. There is no temperature setpoint in the protocol.
+- Climate: **Off**, **Fan only**, or **Cool**. Cool is the fan plus the evaporative pump. Fan speeds on that entity are 1–10. Off stops the fan and the pump and leaves the light alone. There is no temperature setpoint in the protocol. Configure the integration to show any temperature sensor as the room temperature. That value is display-only.
 - Fan on/off and speed 0–10, shown as 0–100% in steps of 10. Turning this fan off does not clear the pump.
 - Evaporative cooling (the pump bit), entity name **Cooling**
 - Courtesy light, entity name **Light**. Current hardware ignores this bit. It is still sent so a power write does not clear it

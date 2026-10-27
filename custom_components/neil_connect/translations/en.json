@@ -18,6 +18,17 @@
       "cannot_connect": "Could not connect to the climatizador. It may be out of range, or another phone may still be connected.",
       "pairing_failed": "The remote must be in pair mode (hold + and \u2212 for 5 seconds while off). Another phone may still be connected."
     },
+    "options": {
+      "step": {
+        "init": {
+          "title": "Neil Connect",
+          "description": "Optional. The climatizador has no temperature probe. The selected sensor is shown on the climate card and is not sent to the device. Clear it to show no temperature.",
+          "data": {
+            "temperature_sensor": "Room temperature"
+          }
+        }
+      }
+    },
     "abort": {
       "already_configured": "[%key:common::config_flow::abort::already_configured%]",
       "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",

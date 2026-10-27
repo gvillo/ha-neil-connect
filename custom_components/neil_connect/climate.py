@@ -14,10 +14,17 @@ from homeassistant.components.climate import (
     HVACAction,
     HVACMode,
 )
-from homeassistant.core import HomeAssistant
+from homeassistant.const import (
+    ATTR_UNIT_OF_MEASUREMENT,
+    STATE_UNAVAILABLE,
+    STATE_UNKNOWN,
+    UnitOfTemperature,
+)
+from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_track_state_change_event
 
-from .const import SPEED_MAX
+from .const import CONF_TEMPERATURE_SENSOR, SPEED_MAX
 from .coordinator import NeilConfigEntry, NeilCoordinator, NeilEntity
 
 FAN_MODES = [str(speed) for speed in range(1, SPEED_MAX + 1)]
@@ -50,6 +57,79 @@ class NeilClimate(NeilEntity, ClimateEntity):
         super().__init__(coordinator)
         self._attr_unique_id = f"{coordinator.address}_climate"
         self._last_running_mode = HVACMode.FAN_ONLY
+
+    @override
+    async def async_added_to_hass(self) -> None:
+        """Refresh the card when the chosen room sensor changes."""
+        await super().async_added_to_hass()
+        entity_id = self._temperature_entity_id()
+        if entity_id is None:
+            return
+        self.async_on_remove(
+            async_track_state_change_event(
+                self.hass, [entity_id], self._async_temperature_changed
+            )
+        )
+
+    @callback
+    def _async_temperature_changed(self, _event: Event) -> None:
+        """The room sensor moved. The climatizador did not."""
+        self.async_write_ha_state()
+
+    def _temperature_entity_id(self) -> str | None:
+        """Return the optional sensor selected in the integration options."""
+        entity_id = self.coordinator.entry.options.get(CONF_TEMPERATURE_SENSOR)
+        if not entity_id:
+            return None
+        return str(entity_id)
+
+    def _room_temperature(self) -> float | None:
+        """Read the external sensor. Nothing here is written to the device."""
+        entity_id = self._temperature_entity_id()
+        if entity_id is None:
+            return None
+        state = self.hass.states.get(entity_id)
+        if state is None or state.state in (STATE_UNKNOWN, STATE_UNAVAILABLE):
+            return None
+        try:
+            return float(state.state)
+        except ValueError:
+            return None
+
+    def _room_temperature_unit(self) -> str:
+        """Use the sensor unit so Home Assistant can convert it."""
+        entity_id = self._temperature_entity_id()
+        if entity_id is not None:
+            state = self.hass.states.get(entity_id)
+            if state is not None:
+                unit = state.attributes.get(ATTR_UNIT_OF_MEASUREMENT)
+                if unit in (UnitOfTemperature.CELSIUS, UnitOfTemperature.FAHRENHEIT):
+                    return str(unit)
+        return UnitOfTemperature.CELSIUS
+
+    @property
+    @override
+    def current_temperature(self) -> float | None:
+        """Room temperature from the selected entity."""
+        return self._room_temperature()
+
+    @property
+    @override
+    def native_current_temperature(self) -> float | None:
+        """Room temperature from the selected entity."""
+        return self._room_temperature()
+
+    @property
+    @override
+    def temperature_unit(self) -> str:
+        """Unit reported by the selected sensor."""
+        return self._room_temperature_unit()
+
+    @property
+    @override
+    def native_temperature_unit(self) -> str:
+        """Unit reported by the selected sensor."""
+        return self._room_temperature_unit()
 
     @property
     @override
