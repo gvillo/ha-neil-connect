@@ -78,7 +78,10 @@ class NeilClimate(NeilEntity, ClimateEntity):
 
     def _temperature_entity_id(self) -> str | None:
         """Return the optional sensor selected in the integration options."""
-        entity_id = self.coordinator.entry.options.get(CONF_TEMPERATURE_SENSOR)
+        entry = self.coordinator.config_entry
+        if entry is None:
+            return None
+        entity_id = entry.options.get(CONF_TEMPERATURE_SENSOR)
         if not entity_id:
             return None
         return str(entity_id)
