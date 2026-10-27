@@ -1,5 +1,9 @@
 # Neil Connect
 
+<p align="center">
+  <img src="brand/logo.png" alt="Neil" width="320">
+</p>
+
 Home Assistant integration for Neil climatizadores that speak the MAXICLIMA BLE GATT protocol from Neil Connect 2.2.0 (`br.com.neil.app`).
 
 This is a [HACS](https://hacs.xyz/) custom repository. It is not part of Home Assistant core and it is not in the default HACS store. The wire format is from static analysis of that app's Hermes bundle and has not been confirmed against a live peripheral.
