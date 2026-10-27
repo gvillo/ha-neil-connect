@@ -1,7 +1,7 @@
 # Neil Connect
 
 <p align="center">
-  <img src="brand/logo.png" alt="Neil" width="320">
+  <img src="https://raw.githubusercontent.com/gvillo/ha-neil-connect/main/custom_components/neil_connect/brand/logo.png" alt="Neil" width="320">
 </p>
 
 Home Assistant integration for Neil climatizadores that speak the MAXICLIMA BLE GATT protocol from Neil Connect 2.2.0 (`br.com.neil.app`).
