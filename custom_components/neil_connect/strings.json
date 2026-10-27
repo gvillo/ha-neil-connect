@@ -1,0 +1,52 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Neil Connect",
+        "description": "Select a Neil climatizador. Disconnect the official app first (only one phone can hold the BLE connection). On first setup, power the remote off and hold + and \u2212 for 5 seconds until the Bluetooth icon blinks.",
+        "data": {
+          "address": "Device"
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Neil Connect",
+        "description": "Connect to {name}. Disconnect the official Neil Connect app before continuing. On first setup, power the remote off and hold + and \u2212 for 5 seconds until the Bluetooth icon blinks."
+      }
+    },
+    "error": {
+      "cannot_connect": "Could not connect to the climatizador. It may be out of range, or another phone may still be connected.",
+      "pairing_failed": "The remote must be in pair mode (hold + and \u2212 for 5 seconds while off). Another phone may still be connected."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured%]",
+      "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
+      "no_devices_found": "No MAXICLIMA devices found. Put the remote in pair mode and disconnect the official app.",
+      "cannot_connect": "Could not connect to the climatizador. It may be out of range, or another phone may still be connected.",
+      "pairing_failed": "The remote must be in pair mode (hold + and \u2212 for 5 seconds while off). Another phone may still be connected."
+    }
+  },
+  "entity": {
+    "switch": {
+      "pump": {
+        "name": "Cooling"
+      },
+      "light": {
+        "name": "Light"
+      }
+    },
+    "sensor": {
+      "water": {
+        "name": "Water level"
+      },
+      "timer_remaining": {
+        "name": "Timer remaining hours"
+      }
+    },
+    "number": {
+      "timer_hours": {
+        "name": "Timer hours"
+      }
+    }
+  }
+}

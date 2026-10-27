@@ -1,0 +1,24 @@
+{
+  "domain": "neil_connect",
+  "name": "Neil Connect",
+  "bluetooth": [
+    {
+      "connectable": true,
+      "service_uuid": "b5180b36-e157-47a9-aeba-48a403cdb78a"
+    },
+    {
+      "connectable": true,
+      "local_name": "MAXICLIMA*"
+    }
+  ],
+  "codeowners": ["@gvillo"],
+  "config_flow": true,
+  "dependencies": ["bluetooth"],
+  "documentation": "https://github.com/gvillo/ha-neil-connect",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "issue_tracker": "https://github.com/gvillo/ha-neil-connect/issues",
+  "loggers": ["bleak", "bleak_retry_connector"],
+  "requirements": ["bleak-retry-connector"],
+  "version": "0.1.0"
+}
