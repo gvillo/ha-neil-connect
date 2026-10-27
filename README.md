@@ -6,11 +6,12 @@
 
 Home Assistant integration for Neil climatizadores that speak the MAXICLIMA BLE GATT protocol from Neil Connect 2.2.0 (`br.com.neil.app`).
 
-This is a [HACS](https://hacs.xyz/) custom repository. It is not part of Home Assistant core and it is not in the default HACS store. The wire format is from static analysis of that app's Hermes bundle and has not been confirmed against a live peripheral.
+This is a [HACS](https://hacs.xyz/) custom repository. It is not part of Home Assistant core and it is not in the default HACS store. The wire format is from static analysis of that app's Hermes bundle. A live peripheral reads back the request instead of an ack of `0`, so those echoed frames are not used as state.
 
 ## Controls
 
-- Fan on/off and speed 0–10, shown as 0–100% in steps of 10
+- Climate: **Off**, **Fan only**, or **Cool**. Cool is the fan plus the evaporative pump. Fan speeds on that entity are 1–10. Off stops the fan and the pump and leaves the light alone. There is no temperature setpoint in the protocol.
+- Fan on/off and speed 0–10, shown as 0–100% in steps of 10. Turning this fan off does not clear the pump.
 - Evaporative cooling (the pump bit), entity name **Cooling**
 - Courtesy light, entity name **Light**. Current hardware ignores this bit. It is still sent so a power write does not clear it
 - Water level, a diagnostic sensor of the raw byte. There is no scale

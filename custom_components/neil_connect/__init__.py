@@ -8,6 +8,7 @@ from homeassistant.core import HomeAssistant
 from .coordinator import NeilConfigEntry, NeilCoordinator
 
 PLATFORMS: list[Platform] = [
+    Platform.CLIMATE,
     Platform.FAN,
     Platform.NUMBER,
     Platform.SENSOR,
