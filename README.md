@@ -59,13 +59,29 @@ GATT, not Bluetooth Classic.
 
 Home Assistant indexes Bluetooth local names on their first three characters and rejects a leading wildcard, so the manifest matches the service UUID and names that start with `MAXICLIMA`. The manual picker still lists any discovered device whose name contains `MAXICLIMA`, or that advertises the service UUID.
 
-## Install
+## Installation
 
-Requires Home Assistant 2026.10.0 or newer, with the Bluetooth integration running.
+Requires Home Assistant 2026.10.0 or newer, with the Bluetooth integration running. This is a custom repository. It is not in the default HACS store, and it is not part of Home Assistant core.
 
-1. HACS → Integrations → overflow menu → **Custom repositories**.
-2. Add `https://github.com/gvillo/ha-neil-connect` with category **Integration**.
-3. Download **Neil Connect** and restart Home Assistant.
-4. Settings → Devices & services → Add integration → **Neil Connect**.
+### Using HACS (recommended)
 
-Do not open a pull request to add this to `hacs/default`.
+[![Open your Home Assistant instance and open a repository inside the Home Assistant Community Store.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=gvillo&repository=ha-neil-connect&category=integration)
+
+1. Click the badge above. It opens this repository in HACS with category **Integration** already selected. Add it.
+2. In HACS, open **Neil Connect** and download it.
+3. Restart Home Assistant.
+
+If the badge does not reach your instance: HACS → Integrations → overflow menu → **Custom repositories** → `https://github.com/gvillo/ha-neil-connect` → category **Integration**. Then download **Neil Connect** and restart.
+
+### Manual installation
+
+1. Download this repository.
+2. Copy `custom_components/neil_connect` into Home Assistant's `config/custom_components/` directory.
+3. Restart Home Assistant.
+
+### Setup
+
+1. Disconnect the official Neil Connect app. The climatizador accepts one BLE central.
+2. On the remote, power off, then hold `+` and `−` for 5 seconds until the Bluetooth icon blinks.
+3. In Home Assistant, go to **Settings → Devices & services**.
+4. Select **Add integration** and choose **Neil Connect**.

@@ -1,0 +1,52 @@
+{
+  "config": {
+    "flow_title": "{name}",
+    "step": {
+      "user": {
+        "title": "Neil Connect",
+        "description": "Seleccioná un climatizador Neil. Desconectá primero la app oficial (un solo teléfono puede mantener la conexión BLE). En la primera configuración, apagá el control remoto y mantené + y \u2212 durante 5 segundos hasta que parpadee el ícono de Bluetooth.",
+        "data": {
+          "address": "Dispositivo"
+        }
+      },
+      "bluetooth_confirm": {
+        "title": "Neil Connect",
+        "description": "Conectate a {name}. Desconectá la app oficial de Neil Connect antes de continuar. En la primera configuración, apagá el control remoto y mantené + y \u2212 durante 5 segundos hasta que parpadee el ícono de Bluetooth."
+      }
+    },
+    "error": {
+      "cannot_connect": "No se pudo conectar al climatizador. Puede estar fuera de alcance, o puede que otro teléfono siga conectado.",
+      "pairing_failed": "El control remoto tiene que estar en modo de emparejamiento (mantené + y \u2212 durante 5 segundos con el equipo apagado). Puede que otro teléfono siga conectado."
+    },
+    "abort": {
+      "already_configured": "[%key:common::config_flow::abort::already_configured%]",
+      "already_in_progress": "[%key:common::config_flow::abort::already_in_progress%]",
+      "no_devices_found": "No se encontraron dispositivos MAXICLIMA. Poné el control remoto en modo de emparejamiento y desconectá la app oficial.",
+      "cannot_connect": "No se pudo conectar al climatizador. Puede estar fuera de alcance, o puede que otro teléfono siga conectado.",
+      "pairing_failed": "El control remoto tiene que estar en modo de emparejamiento (mantené + y \u2212 durante 5 segundos con el equipo apagado). Puede que otro teléfono siga conectado."
+    }
+  },
+  "entity": {
+    "switch": {
+      "pump": {
+        "name": "Frío"
+      },
+      "light": {
+        "name": "Luz"
+      }
+    },
+    "sensor": {
+      "water": {
+        "name": "Nivel de agua"
+      },
+      "timer_remaining": {
+        "name": "Horas restantes del temporizador"
+      }
+    },
+    "number": {
+      "timer_hours": {
+        "name": "Horas del temporizador"
+      }
+    }
+  }
+}
