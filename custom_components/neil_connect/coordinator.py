@@ -59,6 +59,17 @@ class PairingAbortedError(Exception):
     """The peripheral did not offer an acceptable access key."""
 
 
+def _key_has_material(key: bytes) -> bool:
+    """True when bytes after the marker are not all zero. The key is not logged."""
+    return len(key) >= 2 and any(byte != 0 for byte in key[1:])
+
+
+_NOT_PAIRED = (
+    "Neil climatizador is not paired. Power it off, hold + and − for 5 seconds "
+    "until Bluetooth blinks, and disconnect the official app"
+)
+
+
 @dataclass(frozen=True, slots=True)
 class NeilState:
     """Last parsed power and timer state."""
@@ -218,32 +229,53 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             await self._drop_client()
             raise
 
-    def _presentable_key(self) -> bytes:
-        """Return the Q buffer the app writes. Never log it.
+    def _presentable_key(self) -> bytes | None:
+        """Return a Q buffer with key material. Never log it.
 
-        The app persists the buffer whose first byte is Q (`0x51`). R (`0x52`)
-        is only a valid reply to that write, not a key. Older builds stored
-        the R frame and then skipped the handshake, so the peripheral echoed
-        later commands without running them.
+        R plus zeros is the idle read that the first setup stored. The app
+        treats that as no key and reads the characteristic again.
         """
         key = self._key
-        if len(key) < 2 or all(byte == 0 for byte in key[1:]):
-            raise BleakError("Neil access key is missing; pair again from the remote")
+        if not _key_has_material(key):
+            return None
         if key[0] == KEY_MARKER:
             return key
         if key[0] in (ACCEPTED_MARKER, PAIR_MARKER):
             rewritten = bytearray(key)
             rewritten[0] = KEY_MARKER
             return bytes(rewritten)
-        raise BleakError("Neil access key is not a pairing key; pair again from the remote")
+        return None
 
     async def _present_key(self, client: BleakClient) -> None:
-        """Write Q, wait 1s, read. Commands wait until the reply is R.
+        """Write a saved Q key, or read the characteristic and pair.
 
-        Matches `connected()` in Neil Connect 2.2.0. A P reply is flipped
-        back to Q and written once more. Any other marker drops the session.
+        Commands wait until a Q write reads back R. An idle R read leaves the
+        entry unavailable until the remote is in pair mode.
         """
         key = self._presentable_key()
+        if key is None:
+            payload = bytes(await client.read_gatt_char(CHAR_UUID))
+            marker = payload[0] if payload else None
+            _LOGGER.debug(
+                "No saved Q key; characteristic marker %s len %d",
+                hex(marker) if marker is not None else "none",
+                len(payload),
+            )
+            try:
+                resolved = await _access_key_from_payload(client, payload)
+            except PairingAbortedError as err:
+                raise BleakError(_NOT_PAIRED) from err
+            if not _key_has_material(resolved):
+                raise BleakError(_NOT_PAIRED)
+            if payload[:1] == bytes((PAIR_MARKER,)):
+                self._key = resolved
+                self._store_key(resolved)
+                return
+            key = resolved
+        await self._require_accepted(client, key)
+
+    async def _require_accepted(self, client: BleakClient, key: bytes) -> None:
+        """Write Q, wait 1s, read. A P reply is flipped to Q and written once more."""
         _LOGGER.debug("Presenting access key len %d", len(key))
         response = await self._write_key(client, key)
         if response[:1] == bytes((PAIR_MARKER,)):

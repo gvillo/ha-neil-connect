@@ -32,7 +32,7 @@ On setup the integration reads the characteristic:
 - `Q` is stored as the key. `R` is only the reply to writing `Q`, not a key
 - Anything else aborts. The remote has to be in pair mode, or another phone is still connected
 
-The key is saved in the config entry as a list of integers. Every later connection writes that `Q` buffer, waits 1 second, and reads. Fan and timer commands are sent only after the reply is `R`. The key is not logged.
+The key is saved in the config entry as a list of integers. A stored `R` whose other bytes are zero is ignored, and that connection reads the characteristic again. A saved `Q` buffer with key bytes after the marker is written on later connections. Commands are sent only after the reply is `R`. The key is not logged.
 
 ## Example power frame
 
