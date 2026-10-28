@@ -89,21 +89,23 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
         self._control_lock = asyncio.Lock()
         self._thermostat_job: asyncio.Task[None] | None = None
         self._thermostat_pending = False
+        self._sensor_live = False
 
     @override
     async def async_added_to_hass(self) -> None:
         """Restore the setpoint and follow the room sensor."""
         await super().async_added_to_hass()
-        if self._thermostat_available:
-            await self._async_restore_thermostat()
-            if self.data.fan_on:
-                self._saw_fan_on = True
-            elif self.data.pump_on:
-                await self.coordinator.async_set_power(
-                    fan_on=False, speed=0, pump_on=False
-                )
         entity_id = self._temperature_entity_id()
         if entity_id is not None:
+            await self._async_restore_thermostat()
+            self._sensor_live = self._thermostat_available
+            if self._sensor_live:
+                if self.data.fan_on:
+                    self._saw_fan_on = True
+                elif self.data.pump_on:
+                    await self.coordinator.async_set_power(
+                        fan_on=False, speed=0, pump_on=False
+                    )
             self.async_on_remove(
                 async_track_state_change_event(
                     self.hass, [entity_id], self._async_temperature_changed
@@ -130,7 +132,15 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
 
     @callback
     def _async_temperature_changed(self, _event: Event) -> None:
-        """Room sensor moved. Cool may cycle the pump."""
+        """Room sensor moved. A dead sensor hides the target."""
+        live = self._thermostat_available
+        if live and not self._sensor_live:
+            self._requested_mode = self._mode_from_device()
+            if self._requested_mode != HVACMode.OFF:
+                self._last_running_mode = self._requested_mode
+            if self.data.fan_on:
+                self._saw_fan_on = True
+        self._sensor_live = live
         self.async_write_ha_state()
         self._schedule_thermostat()
 
@@ -194,8 +204,8 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
 
     @property
     def _thermostat_available(self) -> bool:
-        """True when the options include a room sensor."""
-        return self._temperature_entity_id() is not None
+        """A room sensor is selected and reporting. Unavailable hides the target."""
+        return self._room_temperature() is not None
 
     def _temperature_entity_id(self) -> str | None:
         """Return the optional sensor selected in the integration options."""

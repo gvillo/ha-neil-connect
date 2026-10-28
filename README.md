@@ -86,7 +86,7 @@ The card then shows the sensor in the middle and a target dial. The dial starts 
 - **Fan only** and **Off** do not cycle the pump.
 - At the minimum target, 16 °C (61 °F), the pump is not cycled. **Cool** turns the fan and the pump on and leaves them. The **Cooling** switch then holds, on or off, until the target is raised.
 
-If the sensor has no reading when you select **Cool**, the fan and the pump turn on and stay that way until a reading arrives. If the room never falls to the target, which is normal for evaporative cooling, the pump stays on.
+If that sensor is unavailable, the card behaves as if no sensor were selected: no current temperature, no target, and **Cool** just turns the fan and the pump on. The saved target comes back when the sensor reports again. If the room never falls to 1 °C below the target, which is normal for evaporative cooling, the pump stays on.
 
 Selecting **Cool** does not resume by itself. A restart reads the fan and the pump from the unit and keeps the target. If the fan is off, the mode is **Off**. Select **Cool** again to run.
 
