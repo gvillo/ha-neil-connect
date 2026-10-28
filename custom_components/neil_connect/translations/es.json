@@ -53,7 +53,11 @@
     },
     "sensor": {
       "water": {
-        "name": "Nivel de agua"
+        "name": "Nivel de agua",
+        "state": {
+          "empty": "Vacío",
+          "has_water": "Con agua"
+        }
       },
       "timer_remaining": {
         "name": "Horas restantes del temporizador"

@@ -53,7 +53,11 @@
     },
     "sensor": {
       "water": {
-        "name": "Water level"
+        "name": "Water level",
+        "state": {
+          "empty": "Empty",
+          "has_water": "Has water"
+        }
       },
       "timer_remaining": {
         "name": "Timer remaining hours"
