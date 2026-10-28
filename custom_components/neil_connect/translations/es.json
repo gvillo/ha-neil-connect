@@ -77,7 +77,7 @@
     },
     "binary_sensor": {
       "service_due": {
-        "name": "Servicio",
+        "name": "Mantenimiento",
         "state": {
           "on": "Pendiente",
           "off": "Al d\u00eda"

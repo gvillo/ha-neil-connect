@@ -114,7 +114,7 @@ The procedure is in the [manual](https://neil.com.ar/wp-content/uploads/2023/05/
 - **Operating hours**. Total fan runtime since counting started.
 - **Maintenance remaining**. Counts down from 12 days 12 hours (300 h). The unit is days, so Home Assistant shows it as days and hours. At 0 the service repair opens.
 - **Filter remaining**. Counts down from 37 days 12 hours (900 h), shown the same way. At 0 the filter repair opens.
-- **Service**. On when the 300 h service is due. Home Assistant raises a repair with the steps.
+- **Maintenance**. On when the 300 h service is due. Home Assistant raises a repair with the steps.
 - **Evaporator filter**. On when the filter replacement is due. Home Assistant raises a repair.
 - **Reset maintenance**. Sets Maintenance remaining back to 12 days 12 hours.
 - **Reset filter replacement and maintenance**. Sets Filter remaining back to 37 days 12 hours and Maintenance remaining back to 12 days 12 hours. Replacing the filter is part of that same service.

@@ -218,25 +218,24 @@ class NeilCountdownSensor(NeilDurationSensor):
 
     _attr_state_class = SensorStateClass.MEASUREMENT
     _attr_native_unit_of_measurement = UnitOfTime.DAYS
-    # A stored precision of 1 rounds to 0.1 day (2.4 h) before the day/hour split.
-    _attr_suggested_display_precision = None
+    _attr_suggested_unit_of_measurement = UnitOfTime.DAYS
+    # Four decimals keeps the hour when Home Assistant splits a day into days and hours.
+    _attr_suggested_display_precision = 4
 
     @override
     async def async_added_to_hass(self) -> None:
-        """Drop the 0.1 precision these sensors inherited while their unit was hours."""
+        """Drop the hours unit Home Assistant kept when these sensors moved to days."""
         await super().async_added_to_hass()
         registry_entry = self.registry_entry
         if registry_entry is None:
             return
-        if (
-            registry_entry.options.get("sensor", {}).get("suggested_display_precision")
-            is None
-        ):
+        private = registry_entry.options.get("sensor.private", {})
+        if private.get("suggested_unit_of_measurement") == UnitOfTime.DAYS:
             return
-        er.async_get(self.hass).async_update_entity_options(
+        self.registry_entry = er.async_get(self.hass).async_update_entity_options(
             registry_entry.entity_id,
-            "sensor",
-            {"suggested_display_precision": None},
+            "sensor.private",
+            {"suggested_unit_of_measurement": UnitOfTime.DAYS},
         )
 
 
