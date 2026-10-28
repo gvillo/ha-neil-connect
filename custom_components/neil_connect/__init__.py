@@ -8,8 +8,11 @@ from homeassistant.helpers import entity_registry as er
 
 from .const import DOMAIN
 from .coordinator import NeilConfigEntry, NeilCoordinator
+from .maintenance import NeilMaintenance
 
 PLATFORMS: list[Platform] = [
+    Platform.BINARY_SENSOR,
+    Platform.BUTTON,
     Platform.CLIMATE,
     Platform.NUMBER,
     Platform.SENSOR,
@@ -31,6 +34,10 @@ def _async_drop_fan_entity(hass: HomeAssistant, entry: NeilConfigEntry) -> None:
 async def async_setup_entry(hass: HomeAssistant, entry: NeilConfigEntry) -> bool:
     """Connect, do the first poll, and expose the platforms."""
     coordinator = NeilCoordinator(hass, entry)
+    maintenance = NeilMaintenance(hass, coordinator)
+    coordinator.maintenance = maintenance
+    await maintenance.async_setup()
+    entry.async_on_unload(maintenance.async_shutdown)
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_unload_platforms(entry, [Platform.FAN])

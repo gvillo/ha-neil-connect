@@ -6,6 +6,7 @@ import asyncio
 from dataclasses import dataclass, replace
 from datetime import timedelta
 import logging
+from typing import TYPE_CHECKING
 
 from bleak import BleakClient
 from bleak.backends.device import BLEDevice
@@ -43,6 +44,9 @@ from .const import (
     power_frame,
     timer_frame,
 )
+
+if TYPE_CHECKING:
+    from .maintenance import NeilMaintenance
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -106,6 +110,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         self._lock = asyncio.Lock()
         self._state = NeilState()
         self._logged_echo = False
+        self.maintenance: NeilMaintenance | None = None
         self.device_info = DeviceInfo(
             identifiers={(DOMAIN, self.address)},
             connections={(CONNECTION_BLUETOOTH, self.address)},
@@ -135,6 +140,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
                 self._apply_timer(timer)
             else:
                 _LOGGER.debug("Short timer frame %s", timer.hex())
+            self._note_runtime()
             return self._state
 
     async def async_set_power(
@@ -155,6 +161,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             )
             data = await self._command(frame)
             self._accept_power_reply(frame, data)
+            self._note_runtime()
             self.async_set_updated_data(self._state)
 
     async def async_set_timer(self, on: bool, hours: int) -> None:
@@ -328,6 +335,12 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
     def _on_disconnect(self, _client: BleakClient) -> None:
         """Bleak disconnected us. The next poll reconnects."""
         _LOGGER.debug("Disconnected from %s", self.address)
+
+    def _note_runtime(self) -> None:
+        """Count fan-on time. A failed poll leaves the anchor where it was."""
+        maintenance = self.maintenance
+        if maintenance is not None:
+            maintenance.observe(self._state.fan_on)
 
     def _log_echo(self, frame: bytes) -> None:
         """The live peripheral reads back the request. Do not parse those 1s."""

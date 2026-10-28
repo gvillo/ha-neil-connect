@@ -1,4 +1,8 @@
-"""Sensors. Water and the timer are protocol bytes. Signal strength is scanner RSSI."""
+"""Sensors.
+
+Water and the timer are protocol bytes. Signal strength is scanner RSSI.
+Maintenance hours are counted locally while the fan is on.
+"""
 
 from __future__ import annotations
 
@@ -11,12 +15,18 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import SIGNAL_STRENGTH_DECIBELS_MILLIWATT, EntityCategory
+from homeassistant.const import (
+    SIGNAL_STRENGTH_DECIBELS_MILLIWATT,
+    EntityCategory,
+    UnitOfTime,
+)
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from .const import FILTER_INTERVAL_HOURS, SERVICE_INTERVAL_HOURS
 from .coordinator import NeilConfigEntry, NeilCoordinator, NeilEntity
+from .maintenance import NeilMaintenanceEntity, interval_attributes
 
 
 async def async_setup_entry(
@@ -24,13 +34,16 @@ async def async_setup_entry(
     entry: NeilConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Add water level, timer remaining, and signal strength."""
+    """Add water, timer, signal, and the local runtime counters."""
     coordinator = entry.runtime_data
     async_add_entities(
         [
             NeilWaterSensor(coordinator),
             NeilTimerRemainingSensor(coordinator),
             NeilSignalStrengthSensor(coordinator),
+            NeilOperatingHoursSensor(coordinator),
+            NeilServiceHoursSensor(coordinator),
+            NeilFilterHoursSensor(coordinator),
         ]
     )
 
@@ -149,3 +162,81 @@ class NeilSignalStrengthSensor(NeilEntity, SensorEntity):
     def native_value(self) -> int | None:
         """Last advertisement RSSI. None until the scanner has heard the unit."""
         return self._rssi
+
+
+class NeilRuntimeSensor(NeilMaintenanceEntity, SensorEntity):
+    """A fan-hour total. Resets are meter resets for statistics."""
+
+    _attr_device_class = SensorDeviceClass.DURATION
+    _attr_native_unit_of_measurement = UnitOfTime.HOURS
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+    _attr_suggested_display_precision = 1
+
+
+class NeilOperatingHoursSensor(NeilRuntimeSensor):
+    """Hours the fan has run since this integration started counting."""
+
+    _attr_translation_key = "operating_hours"
+    _attr_name = "Operating hours"
+    _attr_icon = "mdi:fan-clock"
+
+    def __init__(self, coordinator: NeilCoordinator) -> None:
+        """Set the unique id."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.address}_operating_hours"
+
+    @property
+    @override
+    def native_value(self) -> float:
+        """Lifetime fan hours."""
+        return self.maintenance.operating_hours
+
+
+class NeilServiceHoursSensor(NeilRuntimeSensor):
+    """Hours since the last 300 h preventive maintenance."""
+
+    _attr_translation_key = "service_hours"
+    _attr_name = "Hours since service"
+    _attr_icon = "mdi:wrench-clock"
+
+    def __init__(self, coordinator: NeilCoordinator) -> None:
+        """Set the unique id."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.address}_service_hours"
+
+    @property
+    @override
+    def native_value(self) -> float:
+        """Hours since Reset preventive maintenance."""
+        return self.maintenance.service_hours
+
+    @property
+    @override
+    def extra_state_attributes(self) -> dict[str, float | int | bool | str]:
+        """Interval, time left, whether the repair is open, and the manual links."""
+        return interval_attributes(self.maintenance.service_hours, SERVICE_INTERVAL_HOURS)
+
+
+class NeilFilterHoursSensor(NeilRuntimeSensor):
+    """Hours since the evaporator filter was replaced."""
+
+    _attr_translation_key = "filter_hours"
+    _attr_name = "Hours since filter replacement"
+    _attr_icon = "mdi:air-filter"
+
+    def __init__(self, coordinator: NeilCoordinator) -> None:
+        """Set the unique id."""
+        super().__init__(coordinator)
+        self._attr_unique_id = f"{coordinator.address}_filter_hours"
+
+    @property
+    @override
+    def native_value(self) -> float:
+        """Hours since Reset filter and service."""
+        return self.maintenance.filter_hours
+
+    @property
+    @override
+    def extra_state_attributes(self) -> dict[str, float | int | bool | str]:
+        """Interval, time left, whether the repair is open, and the manual links."""
+        return interval_attributes(self.maintenance.filter_hours, FILTER_INTERVAL_HOURS)

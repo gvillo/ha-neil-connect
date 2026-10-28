@@ -104,6 +104,25 @@ The integration polls every 30 seconds and holds the GATT connection until the c
 
 Firmware opcodes exist in the app and are unused here. There is no firmware entity.
 
+## Maintenance
+
+The Camper manual calls for preventive maintenance every 300 hours of use, and a new evaporator filter every 900 hours. The climatizador does not count those hours. This integration does, while the fan is on.
+
+The procedure is in the [manual](https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf) and on [Neil's maintenance page](https://neil.com.ar/soporte-tecnico/mantenimiento/). Both links are included in the repair.
+
+- **Operating hours**. Total fan runtime since counting started.
+- **Hours since service**. Runtime since the last preventive maintenance. Due at 300 h.
+- **Hours since filter replacement**. Runtime since the evaporator filter was replaced. Due at 900 h.
+- **Preventive maintenance**. On when the 300 h service is due. Home Assistant raises a repair with the steps.
+- **Evaporator filter**. On when the filter replacement is due. Home Assistant raises a repair.
+- **Reset preventive maintenance**. Zeros the 300 h counter.
+- **Reset filter and service**. Zeros the 900 h counter and the 300 h counter. Replacing the filter is part of that same service.
+- **Adjust service hours** and **Adjust filter hours**. Configuration boxes. Use them when the unit already had hours on it before this integration was installed. Each box writes that one counter.
+
+A poll gap longer than 5 minutes is not counted. Time while Home Assistant is stopped is not counted. The courtesy light does not count. The pump does not count unless the fan is on.
+
+Before leaving the unit unused for a long time, the manual says to run it for 3 hours with pre-cooling off so the evaporator filter dries. There is no entity for that. Turn the pump off and leave the fan on.
+
 ## Pairing
 
 On the remote: power off, then hold `+` and `−` for 5 seconds until the Bluetooth icon blinks.

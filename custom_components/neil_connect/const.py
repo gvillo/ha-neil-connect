@@ -37,6 +37,15 @@ SPEED_MAX: Final = 10
 TIMER_HOURS_MIN: Final = 0
 TIMER_HOURS_MAX: Final = 5
 
+# Camper manual. Preventive service every 300 h. New evaporator filter every 900 h.
+SERVICE_INTERVAL_HOURS: Final = 300
+FILTER_INTERVAL_HOURS: Final = 900
+MANUAL_URL: Final = (
+    "https://neil.com.ar/wp-content/uploads/2023/05/"
+    "Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf"
+)
+MAINTENANCE_URL: Final = "https://neil.com.ar/soporte-tecnico/mantenimiento/"
+
 COMMAND_DELAY_SECONDS: Final = 0.6
 PAIR_DELAY_SECONDS: Final = 1.0
 UPDATE_INTERVAL_SECONDS: Final = 30

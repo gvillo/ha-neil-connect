@@ -64,12 +64,61 @@
       },
       "signal_strength": {
         "name": "Signal strength"
+      },
+      "operating_hours": {
+        "name": "Operating hours"
+      },
+      "service_hours": {
+        "name": "Hours since service"
+      },
+      "filter_hours": {
+        "name": "Hours since filter replacement"
+      }
+    },
+    "binary_sensor": {
+      "service_due": {
+        "name": "Preventive maintenance",
+        "state": {
+          "on": "Due",
+          "off": "OK"
+        }
+      },
+      "filter_due": {
+        "name": "Evaporator filter",
+        "state": {
+          "on": "Replace",
+          "off": "OK"
+        }
+      }
+    },
+    "button": {
+      "reset_service": {
+        "name": "Reset preventive maintenance"
+      },
+      "reset_filter": {
+        "name": "Reset filter and service"
       }
     },
     "number": {
       "timer_hours": {
         "name": "Timer hours"
+      },
+      "service_hours_adjust": {
+        "name": "Adjust service hours"
+      },
+      "filter_hours_adjust": {
+        "name": "Adjust filter hours"
       }
+    }
+  },
+  "issues": {
+    "service_due": {
+      "title": "{name}: preventive maintenance due",
+      "description": "{name} has reached 300 hours of use since the last preventive maintenance. Remove the white shell, clear the spray-tube orifices, wash the evaporator filter with water (no chemicals), clean the pre-cooling sensors and the humidifier pump filter, and check the pump flow at minimum fan speed (it should fill a small cup). Then press Reset preventive maintenance.\n\nManual: https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf\nMaintenance: https://neil.com.ar/soporte-tecnico/mantenimiento/"
+    },
+    "filter_due": {
+      "title": "{name}: evaporator filter replacement due",
+      "description": "{name} has reached 900 hours of use since the evaporator filter was last replaced. Replace the filter and do the 300 hour service too. Reset filter and service clears both counters.\n\nManual: https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf\nMaintenance: https://neil.com.ar/soporte-tecnico/mantenimiento/"
     }
   }
 }
