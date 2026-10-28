@@ -79,21 +79,22 @@ The card then shows the sensor in the middle and a target dial. The dial starts 
 **Cool** is the only mode that uses the target:
 
 - The fan starts and stays on.
-- The pump turns on when the room reaches 0.5 °C above the target (1 °F).
-- The pump turns off when the room falls to 0.5 °C below the target.
+- The pump turns on when the room reaches 1 °C above the target (2 °F).
+- The pump turns off when the room falls to 1 °C below the target.
 - Inside that band the pump does not change. A noisy sensor will not chatter it.
 - With the pump off, the card says **Idle**. With the pump on, it says **Cooling**.
 - **Fan only** and **Off** do not cycle the pump.
+- At the minimum target, 16 °C (61 °F), the pump is not cycled. **Cool** turns the fan and the pump on and leaves them. The **Cooling** switch then holds, on or off, until the target is raised.
 
 If the sensor has no reading when you select **Cool**, the fan and the pump turn on and stay that way until a reading arrives. If the room never falls to the target, which is normal for evaporative cooling, the pump stays on.
 
 Selecting **Cool** does not resume by itself. A restart reads the fan and the pump from the unit and keeps the target. If the fan is off, the mode is **Off**. Select **Cool** again to run.
 
-The **Cooling** switch still writes the pump directly. Outside the band, the next sensor update in **Cool** puts the pump back. Inside the band, that switch holds until the room leaves the band.
+The **Cooling** switch still writes the pump directly. Outside the band, the next sensor update in **Cool** puts the pump back. Inside the band, that switch holds until the room leaves the band. At the minimum target it holds either way.
 
 ## Other entities
 
-- **Cooling**. The pump. On the climate card, **Cool** and **Fan only** already set this. With a room sensor, **Cool** keeps writing it to hold the target.
+- **Cooling**. The pump. On the climate card, **Cool** and **Fan only** already set this. With a room sensor, **Cool** keeps writing it to hold the target, except at the minimum target.
 - **Light**. The courtesy light. Current hardware ignores this bit. It is still sent so a power write does not clear it.
 - **Water level**. Power-frame byte 5 is `0` for an empty tank and `1` when it has water. Those are the only values seen on the Camper. Neil Connect 2.2.0 stores the byte as `waterLevel` and no screen reads it. The pump row caption **DEPÓSITO VACÍO** is fixed text. A power write puts a constant `1` in that byte, so an echoed command is not a tank reading. Any other value shows as unknown.
 - **Timer hours**, a slider from 0 to 5. The app calls this sleep mode (**MODO ESPERA**) and labels `1h` through `5h`. `0` turns the timer off. `1`–`5` send `setTimer(on, hours)`. Byte 2 of the timer frame is `sleepSelectedHour`, and the app copies that byte back onto the slider. The app itself turns sleep mode off with a separate standby control.

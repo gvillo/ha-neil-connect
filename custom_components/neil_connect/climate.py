@@ -51,9 +51,9 @@ _DEFAULT_C = 24.0
 _DEFAULT_F = 75.0
 _STEP_C = 0.5
 _STEP_F = 1.0
-# Pump on at target + band, off at target - band. Inside the band it holds.
-_BAND_C = 0.5
-_BAND_F = 1.0
+# Pump on at target + 1 °C, off at target - 1 °C. Inside the band it holds.
+_BAND_C = 1.0
+_BAND_F = 2.0
 
 
 async def async_setup_entry(
@@ -164,6 +164,8 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
         """Run the pump check soon. A busy check remembers to run again."""
         if not self._thermostat_available or self._requested_mode != HVACMode.COOL:
             return
+        if self._target_is_minimum():
+            return
         job = self._thermostat_job
         if self._control_lock.locked() or (job is not None and not job.done()):
             self._thermostat_pending = True
@@ -242,6 +244,13 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
         if self._uses_fahrenheit():
             return _BAND_F
         return _BAND_C
+
+    def _target_is_minimum(self) -> bool:
+        """The floor target does not cycle the pump. Cooling stays as set."""
+        target = self._target_temperature
+        if target is None:
+            return False
+        return target <= self.min_temp
 
     def _want_pump(self, current: float, target: float) -> bool:
         """Hold the pump inside the band so a noisy sensor does not chatter."""
@@ -490,6 +499,9 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
         """
         if self._requested_mode != HVACMode.COOL or not self._thermostat_available:
             return
+        if self._target_is_minimum():
+            await self._async_hold_pump(ensure_fan=ensure_fan, speed=speed)
+            return
         current = self._room_temperature()
         target = self._target_temperature
         if current is None or target is None:
@@ -520,4 +532,35 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
             fan_on=True,
             speed=desired_speed,
             pump_on=want_pump,
+        )
+
+    async def _async_hold_pump(
+        self,
+        *,
+        ensure_fan: bool,
+        speed: int | None,
+    ) -> None:
+        """Minimum target. Leave the pump unless the user just selected Cool.
+
+        Caller holds the control lock. A speed change keeps the current pump.
+        Selecting Cool turns the fan and the pump on, then nothing cycles them.
+        """
+        if not ensure_fan and speed is None:
+            return
+        self._saw_fan_on = True
+        desired_speed = self._clamped_speed(speed)
+        if speed is None:
+            await self.coordinator.async_set_power(
+                fan_on=True,
+                speed=desired_speed,
+                pump_on=True,
+            )
+            return
+        if self.data.fan_on:
+            await self.coordinator.async_set_power(speed=desired_speed)
+            return
+        await self.coordinator.async_set_power(
+            fan_on=True,
+            speed=desired_speed,
+            pump_on=self.data.pump_on,
         )
