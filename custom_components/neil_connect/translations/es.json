@@ -69,10 +69,10 @@
         "name": "Horas de uso"
       },
       "service_hours": {
-        "name": "Horas desde el mantenimiento"
+        "name": "Horas hasta el mantenimiento"
       },
       "filter_hours": {
-        "name": "Horas desde el recambio del filtro"
+        "name": "Horas hasta el recambio del filtro"
       }
     },
     "binary_sensor": {
@@ -102,12 +102,6 @@
     "number": {
       "timer_hours": {
         "name": "Horas del temporizador"
-      },
-      "service_hours_adjust": {
-        "name": "Ajustar horas de mantenimiento"
-      },
-      "filter_hours_adjust": {
-        "name": "Ajustar horas del filtro"
       }
     }
   },

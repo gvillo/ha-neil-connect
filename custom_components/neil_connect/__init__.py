@@ -20,15 +20,20 @@ PLATFORMS: list[Platform] = [
 ]
 
 
-def _async_drop_fan_entity(hass: HomeAssistant, entry: NeilConfigEntry) -> None:
-    """Remove the fan entity this integration used to create."""
+def _async_drop_retired_entities(hass: HomeAssistant, entry: NeilConfigEntry) -> None:
+    """Remove entities this integration no longer creates."""
     address = entry.data.get(CONF_ADDRESS)
     if not isinstance(address, str):
         return
     registry = er.async_get(hass)
-    entity_id = registry.async_get_entity_id("fan", DOMAIN, f"{address}_fan")
-    if entity_id is not None:
-        registry.async_remove(entity_id)
+    for domain, suffix in (
+        ("fan", "fan"),
+        ("number", "service_hours_adjust"),
+        ("number", "filter_hours_adjust"),
+    ):
+        entity_id = registry.async_get_entity_id(domain, DOMAIN, f"{address}_{suffix}")
+        if entity_id is not None:
+            registry.async_remove(entity_id)
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: NeilConfigEntry) -> bool:
@@ -41,7 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: NeilConfigEntry) -> bool
     await coordinator.async_config_entry_first_refresh()
     entry.runtime_data = coordinator
     await hass.config_entries.async_unload_platforms(entry, [Platform.FAN])
-    _async_drop_fan_entity(hass, entry)
+    _async_drop_retired_entities(hass, entry)
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     entry.async_on_unload(entry.add_update_listener(async_reload_entry))
     return True

@@ -69,10 +69,10 @@
         "name": "Operating hours"
       },
       "service_hours": {
-        "name": "Hours since service"
+        "name": "Hours until service"
       },
       "filter_hours": {
-        "name": "Hours since filter replacement"
+        "name": "Hours until filter replacement"
       }
     },
     "binary_sensor": {
@@ -102,12 +102,6 @@
     "number": {
       "timer_hours": {
         "name": "Timer hours"
-      },
-      "service_hours_adjust": {
-        "name": "Adjust service hours"
-      },
-      "filter_hours_adjust": {
-        "name": "Adjust filter hours"
       }
     }
   },

@@ -51,13 +51,18 @@ def _nonnegative(value: object) -> float:
     return max(0.0, float(value))
 
 
+def hours_left(elapsed: float, interval: int) -> float:
+    """Hours until the interval. Stays at 0 once the work is due."""
+    return max(0.0, round(interval - elapsed, 1))
+
+
 def interval_attributes(
     elapsed: float, interval: int
 ) -> dict[str, float | int | bool | str]:
     """Shared state attributes for the hour sensors and the due flags."""
     return {
         "interval_hours": interval,
-        "hours_remaining": max(0.0, round(interval - elapsed, 1)),
+        "hours_used": elapsed,
         "due": elapsed >= interval,
         "manual_url": MANUAL_URL,
         "maintenance_url": MAINTENANCE_URL,
@@ -160,22 +165,6 @@ class NeilMaintenance:
         self.filter_seconds = 0.0
         self.service_seconds = 0.0
         self._publish(announce=False)
-        await self._async_write()
-
-    async def async_set_service_hours(self, hours: float) -> None:
-        """Replace the 300 h counter. Used when the unit is not new."""
-        if self._closed:
-            return
-        self.service_seconds = max(0.0, hours) * 3600
-        self._publish(announce=True)
-        await self._async_write()
-
-    async def async_set_filter_hours(self, hours: float) -> None:
-        """Replace the 900 h counter. The service counter is left alone."""
-        if self._closed:
-            return
-        self.filter_seconds = max(0.0, hours) * 3600
-        self._publish(announce=True)
         await self._async_write()
 
     def async_add_listener(

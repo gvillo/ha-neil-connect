@@ -26,7 +26,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from .const import FILTER_INTERVAL_HOURS, SERVICE_INTERVAL_HOURS
 from .coordinator import NeilConfigEntry, NeilCoordinator, NeilEntity
-from .maintenance import NeilMaintenanceEntity, interval_attributes
+from .maintenance import NeilMaintenanceEntity, hours_left, interval_attributes
 
 
 async def async_setup_entry(
@@ -164,13 +164,18 @@ class NeilSignalStrengthSensor(NeilEntity, SensorEntity):
         return self._rssi
 
 
-class NeilRuntimeSensor(NeilMaintenanceEntity, SensorEntity):
-    """A fan-hour total. Resets are meter resets for statistics."""
+class NeilDurationSensor(NeilMaintenanceEntity, SensorEntity):
+    """Fan hours, counted locally."""
 
     _attr_device_class = SensorDeviceClass.DURATION
     _attr_native_unit_of_measurement = UnitOfTime.HOURS
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
     _attr_suggested_display_precision = 1
+
+
+class NeilRuntimeSensor(NeilDurationSensor):
+    """A fan-hour total. Resets are meter resets for statistics."""
+
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
 
 class NeilOperatingHoursSensor(NeilRuntimeSensor):
@@ -192,11 +197,17 @@ class NeilOperatingHoursSensor(NeilRuntimeSensor):
         return self.maintenance.operating_hours
 
 
-class NeilServiceHoursSensor(NeilRuntimeSensor):
-    """Hours since the last 300 h preventive maintenance."""
+class NeilCountdownSensor(NeilDurationSensor):
+    """Hours left until a maintenance interval. Counts down."""
+
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+
+class NeilServiceHoursSensor(NeilCountdownSensor):
+    """Hours left until the 300 h preventive maintenance."""
 
     _attr_translation_key = "service_hours"
-    _attr_name = "Hours since service"
+    _attr_name = "Hours until service"
     _attr_icon = "mdi:wrench-clock"
 
     def __init__(self, coordinator: NeilCoordinator) -> None:
@@ -207,21 +218,21 @@ class NeilServiceHoursSensor(NeilRuntimeSensor):
     @property
     @override
     def native_value(self) -> float:
-        """Hours since Reset preventive maintenance."""
-        return self.maintenance.service_hours
+        """300 h minus fan time since the last service reset."""
+        return hours_left(self.maintenance.service_hours, SERVICE_INTERVAL_HOURS)
 
     @property
     @override
     def extra_state_attributes(self) -> dict[str, float | int | bool | str]:
-        """Interval, time left, whether the repair is open, and the manual links."""
+        """Interval, hours already used, whether the repair is open, and the links."""
         return interval_attributes(self.maintenance.service_hours, SERVICE_INTERVAL_HOURS)
 
 
-class NeilFilterHoursSensor(NeilRuntimeSensor):
-    """Hours since the evaporator filter was replaced."""
+class NeilFilterHoursSensor(NeilCountdownSensor):
+    """Hours left until the evaporator filter is replaced."""
 
     _attr_translation_key = "filter_hours"
-    _attr_name = "Hours since filter replacement"
+    _attr_name = "Hours until filter replacement"
     _attr_icon = "mdi:air-filter"
 
     def __init__(self, coordinator: NeilCoordinator) -> None:
@@ -232,11 +243,11 @@ class NeilFilterHoursSensor(NeilRuntimeSensor):
     @property
     @override
     def native_value(self) -> float:
-        """Hours since Reset filter and service."""
-        return self.maintenance.filter_hours
+        """900 h minus fan time since the last filter reset."""
+        return hours_left(self.maintenance.filter_hours, FILTER_INTERVAL_HOURS)
 
     @property
     @override
     def extra_state_attributes(self) -> dict[str, float | int | bool | str]:
-        """Interval, time left, whether the repair is open, and the manual links."""
+        """Interval, hours already used, whether the repair is open, and the links."""
         return interval_attributes(self.maintenance.filter_hours, FILTER_INTERVAL_HOURS)

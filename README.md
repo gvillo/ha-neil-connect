@@ -111,13 +111,12 @@ The Camper manual calls for preventive maintenance every 300 hours of use, and a
 The procedure is in the [manual](https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf) and on [Neil's maintenance page](https://neil.com.ar/soporte-tecnico/mantenimiento/). Both links are included in the repair.
 
 - **Operating hours**. Total fan runtime since counting started.
-- **Hours since service**. Runtime since the last preventive maintenance. Due at 300 h.
-- **Hours since filter replacement**. Runtime since the evaporator filter was replaced. Due at 900 h.
+- **Hours until service**. Counts down from 300 h. At 0 the preventive maintenance repair opens.
+- **Hours until filter replacement**. Counts down from 900 h. At 0 the filter repair opens.
 - **Preventive maintenance**. On when the 300 h service is due. Home Assistant raises a repair with the steps.
 - **Evaporator filter**. On when the filter replacement is due. Home Assistant raises a repair.
-- **Reset preventive maintenance**. Zeros the 300 h counter.
-- **Reset filter and service**. Zeros the 900 h counter and the 300 h counter. Replacing the filter is part of that same service.
-- **Adjust service hours** and **Adjust filter hours**. Configuration boxes. Use them when the unit already had hours on it before this integration was installed. Each box writes that one counter.
+- **Reset preventive maintenance**. Sets Hours until service back to 300 h.
+- **Reset filter and service**. Sets Hours until filter replacement back to 900 h and Hours until service back to 300 h. Replacing the filter is part of that same service.
 
 A poll gap longer than 5 minutes is not counted. Time while Home Assistant is stopped is not counted. The courtesy light does not count. The pump does not count unless the fan is on.
 
