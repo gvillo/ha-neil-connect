@@ -51,9 +51,11 @@ _DEFAULT_C = 24.0
 _DEFAULT_F = 75.0
 _STEP_C = 0.5
 _STEP_F = 1.0
-# Pump on at target + 1 °C, off at target - 1 °C. Inside the band it holds.
-_BAND_C = 1.0
-_BAND_F = 2.0
+# Slow evaporative cooling. Pump on at target - 0.5 °C, off at target - 1 °C.
+_ON_BELOW_C = 0.5
+_OFF_BELOW_C = 1.0
+_ON_BELOW_F = 1.0
+_OFF_BELOW_F = 2.0
 
 
 async def async_setup_entry(
@@ -239,11 +241,15 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
             return _DEFAULT_F
         return _DEFAULT_C
 
-    def _band(self) -> float:
-        """Deadband half-width in the sensor unit."""
+    def _pump_offsets(self) -> tuple[float, float]:
+        """How far under the target the pump starts, then stops.
+
+        The climatizador cools slowly, so it starts before the room reaches
+        the target and stops only once the room is further under it.
+        """
         if self._uses_fahrenheit():
-            return _BAND_F
-        return _BAND_C
+            return (_ON_BELOW_F, _OFF_BELOW_F)
+        return (_ON_BELOW_C, _OFF_BELOW_C)
 
     def _target_is_minimum(self) -> bool:
         """The floor target does not cycle the pump. Cooling stays as set."""
@@ -253,11 +259,11 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
         return target <= self.min_temp
 
     def _want_pump(self, current: float, target: float) -> bool:
-        """Hold the pump inside the band so a noisy sensor does not chatter."""
-        band = self._band()
+        """Start 0.5 °C under the target. Stop 1 °C under it."""
+        on_below, off_below = self._pump_offsets()
         if self.data.pump_on:
-            return current > target - band
-        return current >= target + band
+            return current > target - off_below
+        return current >= target - on_below
 
     def _clamped_speed(self, speed: int | None) -> int:
         """Speed 1-10, or the last running speed when the caller did not pass one."""

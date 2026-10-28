@@ -76,12 +76,12 @@ On the integration, open **Configure** and set **Room temperature** to any tempe
 
 The card then shows the sensor in the middle and a target dial. The dial starts at 24 °C (75 °F) and runs from 16–35 °C (61–95 °F), in steps of 0.5 °C (1 °F). The target is stored in Home Assistant.
 
-**Cool** is the only mode that uses the target:
+**Cool** is the only mode that uses the target. This is an evaporative climatizador, not an air conditioner, and it cools slowly. The pump starts while the room is still under the target, instead of waiting until the room is warmer than the target:
 
 - The fan starts and stays on.
-- The pump turns on when the room reaches 1 °C above the target (2 °F).
-- The pump turns off when the room falls to 1 °C below the target.
-- Inside that band the pump does not change. A noisy sensor will not chatter it.
+- The pump turns on when the room rises to 0.5 °C below the target (1 °F).
+- The pump turns off when the room falls to 1 °C below the target (2 °F).
+- Between those two points the pump does not change. A noisy sensor will not chatter it.
 - With the pump off, the card says **Idle**. With the pump on, it says **Cooling**.
 - **Fan only** and **Off** do not cycle the pump.
 - At the minimum target, 16 °C (61 °F), the pump is not cycled. **Cool** turns the fan and the pump on and leaves them. The **Cooling** switch then holds, on or off, until the target is raised.
@@ -90,7 +90,7 @@ If the sensor has no reading when you select **Cool**, the fan and the pump turn
 
 Selecting **Cool** does not resume by itself. A restart reads the fan and the pump from the unit and keeps the target. If the fan is off, the mode is **Off**. Select **Cool** again to run.
 
-The **Cooling** switch still writes the pump directly. Outside the band, the next sensor update in **Cool** puts the pump back. Inside the band, that switch holds until the room leaves the band. At the minimum target it holds either way.
+The **Cooling** switch still writes the pump directly. Outside that span, the next sensor update in **Cool** puts the pump back. Between 1 °C and 0.5 °C below the target, that switch holds. At the minimum target it holds either way.
 
 ## Other entities
 
