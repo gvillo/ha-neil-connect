@@ -41,7 +41,7 @@ TIMER_HOURS_MAX: Final = 5
 SERVICE_INTERVAL_HOURS: Final = 300
 FILTER_INTERVAL_HOURS: Final = 900
 MANUAL_URL: Final = (
-    "https://neil.com.ar/wp-content/uploads/2023/05/"
+    "https://github.com/gvillo/ha-neil-connect/blob/main/manuals/"
     "Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf"
 )
 MAINTENANCE_URL: Final = "https://neil.com.ar/soporte-tecnico/mantenimiento/"
