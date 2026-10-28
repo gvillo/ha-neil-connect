@@ -20,6 +20,23 @@ PLATFORMS: list[Platform] = [
 ]
 
 
+async def async_migrate_entry(hass: HomeAssistant, entry: NeilConfigEntry) -> bool:
+    """Disable the light switch. The unit has no light."""
+    if entry.version != 1:
+        return True
+    address = entry.data.get(CONF_ADDRESS)
+    if isinstance(address, str):
+        registry = er.async_get(hass)
+        entity_id = registry.async_get_entity_id("switch", DOMAIN, f"{address}_light")
+        if entity_id is not None:
+            registry.async_update_entity(
+                entity_id,
+                disabled_by=er.RegistryEntryDisabler.INTEGRATION,
+            )
+    hass.config_entries.async_update_entry(entry, version=2)
+    return True
+
+
 def _async_drop_retired_entities(hass: HomeAssistant, entry: NeilConfigEntry) -> None:
     """Remove entities this integration no longer creates."""
     address = entry.data.get(CONF_ADDRESS)

@@ -61,7 +61,7 @@ def device_title(info: BluetoothServiceInfoBleak) -> str:
 class NeilConnectConfigFlow(ConfigFlow, domain=DOMAIN):
     """Bluetooth discovery and a manual MAXICLIMA picker."""
 
-    VERSION = 1
+    VERSION = 2
 
     def __init__(self) -> None:
         """Initialize the flow."""

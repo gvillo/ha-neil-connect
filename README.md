@@ -95,7 +95,7 @@ The **Cooling** switch still writes the pump directly. Outside that span, the ne
 ## Other entities
 
 - **Cooling**. The pump. On the climate card, **Cool** and **Fan only** already set this. With a room sensor, **Cool** keeps writing it to hold the target, except at the minimum target.
-- **Light**. The courtesy light. Current hardware ignores this bit. It is still sent so a power write does not clear it.
+- **Light**, disabled by default. The unit has no light. Enable it from the device page. The protocol still has the bit, and a power write sends it so that byte is not cleared.
 - **Water level**. Power-frame byte 5 is `0` for an empty tank and `1` when it has water. Those are the only values seen on the Camper. Neil Connect 2.2.0 stores the byte as `waterLevel` and no screen reads it. The pump row caption **DEPÓSITO VACÍO** is fixed text. A power write puts a constant `1` in that byte, so an echoed command is not a tank reading. Any other value shows as unknown.
 - **Timer hours**, a slider from 0 to 5. The app calls this sleep mode (**MODO ESPERA**) and labels `1h` through `5h`. `0` turns the timer off. `1`–`5` send `setTimer(on, hours)`. Byte 2 of the timer frame is `sleepSelectedHour`, and the app copies that byte back onto the slider. The app itself turns sleep mode off with a separate standby control.
 - **Timer remaining hours**, a sensor of timer byte 3. The app names that byte `sleepCurrentHour`, stores it, and does not show it. It is not confirmed to be hours remaining.

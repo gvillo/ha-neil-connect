@@ -66,11 +66,12 @@ class NeilPumpSwitch(NeilPowerSwitch):
 
 
 class NeilLightSwitch(NeilPowerSwitch):
-    """Courtesy light. Current hardware ignores the bit; still send it."""
+    """Protocol light bit. The unit has no light, so this starts disabled."""
 
     _attr_translation_key = "light"
     _attr_name = "Light"
     _attr_icon = "mdi:lightbulb"
+    _attr_entity_registry_enabled_default = False
     _field = "bulb_on"
 
     def __init__(self, coordinator: NeilCoordinator) -> None:
