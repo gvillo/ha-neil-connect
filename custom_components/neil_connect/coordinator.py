@@ -50,6 +50,9 @@ if TYPE_CHECKING:
 
 _LOGGER = logging.getLogger(__name__)
 
+# A status read often comes back equal to the query. That frame is not state.
+_STATUS_REREADS = 2
+
 CONNECTION_ERRORS = (
     BleakError,
     TimeoutError,
@@ -110,6 +113,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         self._lock = asyncio.Lock()
         self._state = NeilState()
         self._logged_echo = False
+        self._seen_power = False
         self.maintenance: NeilMaintenance | None = None
         self.device_info = DeviceInfo(
             identifiers={(DOMAIN, self.address)},
@@ -123,13 +127,15 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         """Read power, then timer."""
         async with self._lock:
             try:
-                power = await self._exchange(READ_POWER)
-                timer = await self._exchange(READ_TIMER)
+                power = await self._read_status(READ_POWER)
+                timer = await self._read_status(READ_TIMER)
             except CONNECTION_ERRORS as err:
                 await self._drop_client()
                 raise UpdateFailed(f"Neil climatizador unavailable: {err}") from err
             if self._is_echo(READ_POWER, power):
                 self._log_echo(power)
+                if not self._seen_power:
+                    raise UpdateFailed("Neil climatizador did not return power state")
             elif len(power) < FRAME_LENGTH:
                 raise UpdateFailed(f"Short power frame ({len(power)} bytes)")
             else:
@@ -201,6 +207,25 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         await asyncio.sleep(COMMAND_DELAY_SECONDS)
         data = bytes(await client.read_gatt_char(CHAR_UUID))
         _LOGGER.debug("RX %s", data.hex())
+        return data
+
+    async def _read_status(self, request: bytes) -> bytes:
+        """Query status. An echo is the query, so read again without writing.
+
+        Caller holds the lock. The first read after a restart is often the
+        request itself. A later read is the fan, pump, light, and timer.
+        """
+        data = await self._exchange(request)
+        client = self._client
+        for _ in range(_STATUS_REREADS):
+            if not self._is_echo(request, data):
+                return data
+            self._log_echo(data)
+            if client is None or not client.is_connected:
+                break
+            await asyncio.sleep(COMMAND_DELAY_SECONDS)
+            data = bytes(await client.read_gatt_char(CHAR_UUID))
+            _LOGGER.debug("RX %s", data.hex())
         return data
 
     async def _ensure_connected(self) -> None:
@@ -437,6 +462,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             last_speed = raw_speed
         else:
             last_speed = self._state.last_speed
+        self._seen_power = True
         self._state = replace(
             self._state,
             fan_on=fan_on,

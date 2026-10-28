@@ -96,13 +96,10 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
             await self._async_restore_thermostat()
             if self.data.fan_on:
                 self._saw_fan_on = True
-            elif self._requested_mode not in (None, HVACMode.OFF):
-                # The unit is off. Don't resume Cool across a restart.
-                self._requested_mode = HVACMode.OFF
-                if self.data.pump_on:
-                    await self.coordinator.async_set_power(
-                        fan_on=False, speed=0, pump_on=False
-                    )
+            elif self.data.pump_on:
+                await self.coordinator.async_set_power(
+                    fan_on=False, speed=0, pump_on=False
+                )
         entity_id = self._temperature_entity_id()
         if entity_id is not None:
             self.async_on_remove(
@@ -114,24 +111,18 @@ class NeilClimate(NeilEntity, ClimateEntity, RestoreEntity):
         self.async_write_ha_state()
 
     async def _async_restore_thermostat(self) -> None:
-        """Load the last mode and target. The device has neither."""
+        """Load the last target. Mode is the fan and the pump on the unit."""
         last = await self.async_get_last_state()
-        if last is not None and last.state in {
-            HVACMode.OFF,
-            HVACMode.FAN_ONLY,
-            HVACMode.COOL,
-        }:
-            self._requested_mode = HVACMode(last.state)
-            if self._requested_mode != HVACMode.OFF:
-                self._last_running_mode = self._requested_mode
+        if last is not None:
             raw = last.attributes.get(ATTR_TEMPERATURE)
             if raw is not None:
                 try:
                     self._target_temperature = float(raw)
                 except (TypeError, ValueError):
                     self._target_temperature = None
-        if self._requested_mode is None:
-            self._requested_mode = self._mode_from_device()
+        self._requested_mode = self._mode_from_device()
+        if self._requested_mode != HVACMode.OFF:
+            self._last_running_mode = self._requested_mode
         if self._target_temperature is None:
             self._target_temperature = self._default_target()
 

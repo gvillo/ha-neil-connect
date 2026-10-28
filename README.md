@@ -87,7 +87,7 @@ The card then shows the sensor in the middle and a target dial. The dial starts 
 
 If the sensor has no reading when you select **Cool**, the fan and the pump turn on and stay that way until a reading arrives. If the room never falls to the target, which is normal for evaporative cooling, the pump stays on.
 
-Selecting **Cool** does not resume by itself. A restart while the fan is off, or turning the unit off on the remote, sets the mode to **Off**. Select **Cool** again to run.
+Selecting **Cool** does not resume by itself. A restart reads the fan and the pump from the unit and keeps the target. If the fan is off, the mode is **Off**. Select **Cool** again to run.
 
 The **Cooling** switch still writes the pump directly. Outside the band, the next sensor update in **Cool** puts the pump back. Inside the band, that switch holds until the room leaves the band.
 
