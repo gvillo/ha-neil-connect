@@ -31,7 +31,7 @@ class NeilResetServiceButton(NeilMaintenanceEntity, ButtonEntity):
     """Zero the 300 h counter. The filter counter stays."""
 
     _attr_translation_key = "reset_service"
-    _attr_name = "Reset preventive maintenance"
+    _attr_name = "Reset maintenance"
     _attr_icon = "mdi:backup-restore"
 
     def __init__(self, coordinator: NeilCoordinator) -> None:
@@ -52,7 +52,7 @@ class NeilResetFilterButton(NeilMaintenanceEntity, ButtonEntity):
     """
 
     _attr_translation_key = "reset_filter"
-    _attr_name = "Reset filter and service"
+    _attr_name = "Reset filter replacement and maintenance"
     _attr_icon = "mdi:backup-restore"
 
     def __init__(self, coordinator: NeilCoordinator) -> None:

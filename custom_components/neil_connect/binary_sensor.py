@@ -35,7 +35,7 @@ class NeilServiceDueBinarySensor(NeilMaintenanceEntity, BinarySensorEntity):
     """On at 300 fan hours since the last preventive maintenance."""
 
     _attr_translation_key = "service_due"
-    _attr_name = "Preventive maintenance"
+    _attr_name = "Service"
     _attr_device_class = BinarySensorDeviceClass.PROBLEM
 
     def __init__(self, coordinator: NeilCoordinator) -> None:

@@ -69,10 +69,10 @@
         "name": "Horas de uso"
       },
       "service_hours": {
-        "name": "Servicio"
+        "name": "Hasta el mantenimiento preventivo"
       },
       "filter_hours": {
-        "name": "Horas hasta el recambio del filtro"
+        "name": "Hasta el recambio del filtro"
       }
     },
     "binary_sensor": {
@@ -93,10 +93,10 @@
     },
     "button": {
       "reset_service": {
-        "name": "Reiniciar servicio"
+        "name": "Reiniciar mantenimiento preventivo"
       },
       "reset_filter": {
-        "name": "Reiniciar filtro y mantenimiento"
+        "name": "Reiniciar recambio filtro y mantenimiento"
       }
     },
     "number": {
@@ -111,11 +111,11 @@
   "issues": {
     "service_due": {
       "title": "{name}: mantenimiento preventivo pendiente",
-      "description": "{name} lleg\u00f3 a las 300 horas de uso desde el \u00faltimo mantenimiento preventivo. Sac\u00e1 la c\u00e1scara blanca, destap\u00e1 los orificios del tubo rociador, lav\u00e1 el filtro evaporador con agua (sin qu\u00edmicos), limpi\u00e1 los sensores y el filtro de la bomba humectadora, y verific\u00e1 el caudal de la bomba con el ventilador al m\u00ednimo (tiene que llenar un pocillo de caf\u00e9). Despu\u00e9s presion\u00e1 Reiniciar servicio.\n\nManual: https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf\nMantenimiento: https://neil.com.ar/soporte-tecnico/mantenimiento/"
+      "description": "{name} lleg\u00f3 a las 300 horas de uso desde el \u00faltimo mantenimiento preventivo. Sac\u00e1 la c\u00e1scara blanca, destap\u00e1 los orificios del tubo rociador, lav\u00e1 el filtro evaporador con agua (sin qu\u00edmicos), limpi\u00e1 los sensores y el filtro de la bomba humectadora, y verific\u00e1 el caudal de la bomba con el ventilador al m\u00ednimo (tiene que llenar un pocillo de caf\u00e9). Despu\u00e9s presion\u00e1 Reiniciar mantenimiento preventivo.\n\nManual: https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf\nMantenimiento: https://neil.com.ar/soporte-tecnico/mantenimiento/"
     },
     "filter_due": {
       "title": "{name}: recambio del filtro evaporador pendiente",
-      "description": "{name} lleg\u00f3 a las 900 horas de uso desde el \u00faltimo recambio del filtro evaporador. Reemplazalo y hac\u00e9 tambi\u00e9n el mantenimiento de las 300 horas. Reiniciar filtro y mantenimiento pone los dos contadores en cero.\n\nManual: https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf\nMantenimiento: https://neil.com.ar/soporte-tecnico/mantenimiento/"
+      "description": "{name} lleg\u00f3 a las 900 horas de uso desde el \u00faltimo recambio del filtro evaporador. Reemplazalo y hac\u00e9 tambi\u00e9n el mantenimiento de las 300 horas. Reiniciar recambio filtro y mantenimiento pone los dos contadores en cero.\n\nManual: https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf\nMantenimiento: https://neil.com.ar/soporte-tecnico/mantenimiento/"
     }
   }
 }
