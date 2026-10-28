@@ -35,6 +35,8 @@ from .const import (
     KEY_MARKER,
     PAIR_DELAY_SECONDS,
     PAIR_MARKER,
+    POLL_INTERVAL_MAX,
+    POLL_INTERVAL_MIN,
     READ_POWER,
     READ_TIMER,
     SPEED_MAX,
@@ -52,6 +54,8 @@ _LOGGER = logging.getLogger(__name__)
 
 # A status read often comes back equal to the query. That frame is not state.
 _STATUS_REREADS = 2
+# A dead GATT socket can report connected and never return. Drop it and retry.
+_GATT_TIMEOUT_SECONDS = 8.0
 
 CONNECTION_ERRORS = (
     BleakError,
@@ -105,6 +109,7 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             update_interval=timedelta(seconds=UPDATE_INTERVAL_SECONDS),
             always_update=False,
         )
+        self.poll_seconds = UPDATE_INTERVAL_SECONDS
         self.address: str = entry.data[CONF_ADDRESS]
         raw_key = entry.data.get(CONF_ACCESS_KEY, [])
         self._key = bytes(raw_key) if isinstance(raw_key, list) else b""
@@ -113,7 +118,6 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         self._lock = asyncio.Lock()
         self._state = NeilState()
         self._logged_echo = False
-        self._seen_power = False
         self.maintenance: NeilMaintenance | None = None
         self.device_info = DeviceInfo(
             identifiers={(DOMAIN, self.address)},
@@ -124,30 +128,40 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         )
 
     async def _async_update_data(self) -> NeilState:
-        """Read power, then timer."""
+        """Read power, then timer. A stale connection is dropped and retried once."""
         async with self._lock:
-            try:
-                power = await self._read_status(READ_POWER)
-                timer = await self._read_status(READ_TIMER)
-            except CONNECTION_ERRORS as err:
-                await self._drop_client()
-                raise UpdateFailed(f"Neil climatizador unavailable: {err}") from err
-            if self._is_echo(READ_POWER, power):
-                self._log_echo(power)
-                if not self._seen_power:
-                    raise UpdateFailed("Neil climatizador did not return power state")
-            elif len(power) < FRAME_LENGTH:
-                raise UpdateFailed(f"Short power frame ({len(power)} bytes)")
-            else:
+            last_error: Exception | None = None
+            for _attempt in range(2):
+                try:
+                    power, timer = await self._poll_frames()
+                except CONNECTION_ERRORS as err:
+                    last_error = err
+                    await self._drop_client()
+                    continue
+                if self._is_echo(READ_POWER, power) or len(power) < FRAME_LENGTH:
+                    if self._is_echo(READ_POWER, power):
+                        self._log_echo(power)
+                    else:
+                        _LOGGER.debug("Short power frame %s bytes", len(power))
+                    last_error = UpdateFailed("Neil climatizador did not return power state")
+                    await self._drop_client()
+                    continue
                 self._apply_power(power)
-            if self._is_echo(READ_TIMER, timer):
-                self._log_echo(timer)
-            elif len(timer) >= FRAME_LENGTH:
-                self._apply_timer(timer)
-            else:
-                _LOGGER.debug("Short timer frame %s", timer.hex())
-            self._note_runtime()
-            return self._state
+                if self._is_echo(READ_TIMER, timer):
+                    self._log_echo(timer)
+                elif len(timer) >= FRAME_LENGTH:
+                    self._apply_timer(timer)
+                else:
+                    _LOGGER.debug("Short timer frame %s", timer.hex())
+                self._note_runtime()
+                return self._state
+            raise UpdateFailed(f"Neil climatizador unavailable: {last_error}")
+
+    async def _poll_frames(self) -> tuple[bytes, bytes]:
+        """Query power and timer on the current connection. Caller holds the lock."""
+        power = await self._read_status(READ_POWER)
+        timer = await self._read_status(READ_TIMER)
+        return power, timer
 
     async def async_set_power(
         self,
@@ -181,6 +195,13 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             self._accept_timer_reply(frame, data)
             self.async_set_updated_data(self._state)
 
+    def set_poll_interval(self, seconds: int) -> None:
+        """Change how often the status poll runs, and reschedule it."""
+        clamped = max(POLL_INTERVAL_MIN, min(POLL_INTERVAL_MAX, int(seconds)))
+        self.poll_seconds = clamped
+        self.update_interval = timedelta(seconds=clamped)
+        self._schedule_refresh()
+
     async def async_shutdown(self) -> None:
         """Stop polling and drop the GATT connection."""
         await super().async_shutdown()
@@ -203,11 +224,16 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
         if client is None or not client.is_connected:
             raise BleakError("peripheral unavailable")
         _LOGGER.debug("TX %s", frame.hex())
-        await client.write_gatt_char(CHAR_UUID, frame, response=True)
+        try:
+            await asyncio.wait_for(
+                client.write_gatt_char(CHAR_UUID, frame, response=True),
+                _GATT_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            await self._drop_client()
+            raise
         await asyncio.sleep(COMMAND_DELAY_SECONDS)
-        data = bytes(await client.read_gatt_char(CHAR_UUID))
-        _LOGGER.debug("RX %s", data.hex())
-        return data
+        return await self._read_char(client)
 
     async def _read_status(self, request: bytes) -> bytes:
         """Query status. An echo is the query, so read again without writing.
@@ -224,9 +250,22 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             if client is None or not client.is_connected:
                 break
             await asyncio.sleep(COMMAND_DELAY_SECONDS)
-            data = bytes(await client.read_gatt_char(CHAR_UUID))
-            _LOGGER.debug("RX %s", data.hex())
+            data = await self._read_char(client)
         return data
+
+    async def _read_char(self, client: BleakClient) -> bytes:
+        """Read the characteristic. A hung socket is dropped."""
+        try:
+            data = await asyncio.wait_for(
+                client.read_gatt_char(CHAR_UUID),
+                _GATT_TIMEOUT_SECONDS,
+            )
+        except TimeoutError:
+            await self._drop_client()
+            raise
+        payload = bytes(data)
+        _LOGGER.debug("RX %s", payload.hex())
+        return payload
 
     async def _ensure_connected(self) -> None:
         """Connect, write the Q key, and wait for an R reply."""
@@ -462,7 +501,6 @@ class NeilCoordinator(DataUpdateCoordinator[NeilState]):
             last_speed = raw_speed
         else:
             last_speed = self._state.last_speed
-        self._seen_power = True
         self._state = replace(
             self._state,
             fan_on=fan_on,

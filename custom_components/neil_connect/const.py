@@ -48,7 +48,9 @@ MAINTENANCE_URL: Final = "https://neil.com.ar/soporte-tecnico/mantenimiento/"
 
 COMMAND_DELAY_SECONDS: Final = 0.6
 PAIR_DELAY_SECONDS: Final = 1.0
-UPDATE_INTERVAL_SECONDS: Final = 30
+UPDATE_INTERVAL_SECONDS: Final = 60
+POLL_INTERVAL_MIN: Final = 10
+POLL_INTERVAL_MAX: Final = 3600
 
 READ_POWER: Final = bytes((OPCODE_READ_POWER, 1, 1, 1, 1, 1))
 READ_TIMER: Final = bytes((OPCODE_READ_TIMER, 1, 1, 1, 1, 1))

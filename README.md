@@ -101,7 +101,7 @@ The **Cooling** switch still writes the pump directly. Outside that span, the ne
 - **Timer remaining hours**, a sensor of timer byte 3. The app names that byte `sleepCurrentHour`, stores it, and does not show it. It is not confirmed to be hours remaining.
 - **Signal strength**, a diagnostic sensor, disabled by default. Enable it from the device page. It is the Bluetooth scanner's last advertisement RSSI in dBm. The climatizador does not send it. A held connection can stop advertisements, so the value may sit still until the next one.
 
-The integration polls every 30 seconds and holds the GATT connection until the config entry is unloaded.
+The integration polls every 60 seconds and holds the GATT connection until the config entry is unloaded. **Poll interval**, on the device page under configuration, changes that in seconds from 10 to 3600. A read that echoes the query or hangs drops the connection and tries once more in that same poll.
 
 Firmware opcodes exist in the app and are unused here. There is no firmware entity.
 
@@ -112,12 +112,12 @@ The Camper manual calls for preventive maintenance every 300 hours of use, and a
 The procedure is in the [manual](https://neil.com.ar/wp-content/uploads/2023/05/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf) and on [Neil's maintenance page](https://neil.com.ar/soporte-tecnico/mantenimiento/). Both links are included in the repair.
 
 - **Operating hours**. Total fan runtime since counting started.
-- **Hours until service**. Counts down from 300 h. At 0 the preventive maintenance repair opens.
+- **Service**, a sensor. Counts down from 300 h. At 0 the service repair opens.
 - **Hours until filter replacement**. Counts down from 900 h. At 0 the filter repair opens.
-- **Preventive maintenance**. On when the 300 h service is due. Home Assistant raises a repair with the steps.
+- **Service**, a binary sensor. On when the 300 h service is due. Home Assistant raises a repair with the steps.
 - **Evaporator filter**. On when the filter replacement is due. Home Assistant raises a repair.
-- **Reset preventive maintenance**. Sets Hours until service back to 300 h.
-- **Reset filter and service**. Sets Hours until filter replacement back to 900 h and Hours until service back to 300 h. Replacing the filter is part of that same service.
+- **Reset service**. Sets Service back to 300 h.
+- **Reset filter and service**. Sets Hours until filter replacement back to 900 h and Service back to 300 h. Replacing the filter is part of that same service.
 
 A poll gap longer than 5 minutes is not counted. Time while Home Assistant is stopped is not counted. The courtesy light does not count. The pump does not count unless the fan is on.
 
