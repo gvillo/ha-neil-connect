@@ -109,7 +109,7 @@ Firmware opcodes exist in the app and are unused here. There is no firmware enti
 
 The Camper manual calls for preventive maintenance every 300 hours of use, and a new evaporator filter every 900 hours. The climatizador does not count those hours. This integration does, while the fan is on.
 
-The procedure is page 11 of the [manual](manuals/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf). The repair lists those six steps. [Neil's maintenance page](https://neil.com.ar/soporte-tecnico/mantenimiento/) stays linked from the repair. [`manuals/mantenimiento.html`](manuals/mantenimiento.html) is a local copy of the steps and of the videos on that page.
+The procedure is page 11 of the [manual](manuals/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf). The repair lists those six steps. [Neil's maintenance page](https://neil.com.ar/soporte-tecnico/mantenimiento/) stays linked from the repair. [`manuals/mantenimiento/`](manuals/mantenimiento/index.html) is a local copy of that page, including its images and videos.
 
 - **Operating hours**. Total fan runtime since counting started.
 - **Maintenance remaining**. Counts down from 12 days 12 hours (300 h). The unit is days, so Home Assistant shows it as days and hours. At 0 the service repair opens.
