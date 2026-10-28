@@ -22,7 +22,7 @@
       "step": {
         "init": {
           "title": "Neil Connect",
-          "description": "Opcional. El climatizador no tiene sonda de temperatura. El sensor que elijas se muestra en la tarjeta de clima y no se manda al equipo. Dejalo vac\u00edo para no mostrar temperatura.",
+          "description": "Opcional. El climatizador no tiene sonda de temperatura. Con un sensor, la tarjeta muestra esa temperatura y un objetivo, y en Fr\u00edo el equipo enciende y apaga la bomba para mantenerlo. Dejalo vac\u00edo para ocultar el objetivo.",
           "data": {
             "temperature_sensor": "Temperatura ambiente"
           }
@@ -61,6 +61,9 @@
       },
       "timer_remaining": {
         "name": "Horas restantes del temporizador"
+      },
+      "signal_strength": {
+        "name": "Intensidad de se\u00f1al"
       }
     },
     "number": {

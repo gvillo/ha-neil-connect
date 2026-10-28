@@ -22,7 +22,7 @@
       "step": {
         "init": {
           "title": "Neil Connect",
-          "description": "Optional. The climatizador has no temperature probe. The selected sensor is shown on the climate card and is not sent to the device. Clear it to show no temperature.",
+          "description": "Optional. The climatizador has no temperature probe. With a sensor, the climate card shows that temperature and a target, and Cool cycles the pump to hold it. Clear the sensor to hide the target.",
           "data": {
             "temperature_sensor": "Room temperature"
           }
@@ -61,6 +61,9 @@
       },
       "timer_remaining": {
         "name": "Timer remaining hours"
+      },
+      "signal_strength": {
+        "name": "Signal strength"
       }
     },
     "number": {

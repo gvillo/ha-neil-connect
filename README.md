@@ -56,17 +56,51 @@ The catalog is [Neil climatizadores](https://neil.com.ar/productos/). The integr
 
 Essence and Master have no BLE module. Aires acondicionados and calderas do not include the Neil Connect controller. Neil's page for Slim Full 24 V lists a Premium controller instead of Connect. Slim Full 12 V, Camper, Camper Patagonia, Camper Solar, and Premium 700 are listed with Connect.
 
-## Controls
+## Climate card
 
-- Climate: **Off**, **Fan only**, or **Cool**. Cool is the fan plus the evaporative pump. Fan speeds on that entity are 1–10. Off stops the fan and the pump and leaves the light alone. There is no temperature setpoint in the protocol. Configure the integration to show any temperature sensor as the room temperature. That value is display-only.
-- Fan on/off and speed 0–10, shown as 0–100% in steps of 10. Turning this fan off does not clear the pump.
-- Evaporative cooling (the pump bit), entity name **Cooling**
-- Courtesy light, entity name **Light**. Current hardware ignores this bit. It is still sent so a power write does not clear it
-- Water level. Power-frame byte 5 is `0` for an empty tank and `1` when it has water. Those are the only values seen on the Camper. Neil Connect 2.2.0 stores the byte as `waterLevel` and no screen reads it. The pump row caption **DEPÓSITO VACÍO** is fixed text. A power write puts a constant `1` in that byte, so an echoed command is not a tank reading. Any other value shows as unknown.
-- Timer hours, a slider from 0 to 5. The app calls this sleep mode (**MODO ESPERA**) and labels `1h` through `5h`. `0` turns the timer off. `1`–`5` send `setTimer(on, hours)`. Byte 2 of the timer frame is `sleepSelectedHour`, and the app copies that byte back onto the slider. The app itself turns sleep mode off with a separate standby control.
-- Timer remaining hours, a diagnostic sensor of timer byte 3. The app names that byte `sleepCurrentHour`, stores it, and does not show it. It is not confirmed to be hours remaining.
+The entity to put on a dashboard is the climate entity, named **Climatizador**. Add a **Thermostat** card and select it. An Entities card only shows on and off. Fan speed and the target live on the Thermostat card and in the entity dialog you get by tapping the card.
 
-Turning the fan off sends fan `0` and speed `0` and leaves cooling and light as they are. The integration polls every 30 seconds and holds the GATT connection until the config entry is unloaded.
+There is no separate fan entity. Speed is the fan mode on this climate entity, **1** through **10**.
+
+The unit has no temperature probe and the protocol has no setpoint. Modes are **Off**, **Fan only**, and **Cool**. **Off** stops the fan and the pump and leaves the light alone. **Fan only** runs the fan with the pump off. **Cool** runs the fan with the pump on. The pump is the evaporative cooling.
+
+### No room sensor
+
+The card has the three modes and the fan speeds. It has no current temperature and no target dial.
+
+Choosing a speed while the unit is **Off** starts **Fan only**.
+
+### With a room sensor
+
+On the integration, open **Configure** and set **Room temperature** to any temperature sensor. That reading is shown on the card. It is not sent to the climatizador. Clear it to remove the target.
+
+The card then shows the sensor in the middle and a target dial. The dial starts at 24 °C (75 °F) and runs from 16–35 °C (61–95 °F), in steps of 0.5 °C (1 °F). The target is stored in Home Assistant.
+
+**Cool** is the only mode that uses the target:
+
+- The fan starts and stays on.
+- The pump turns on when the room reaches 0.5 °C above the target (1 °F).
+- The pump turns off when the room falls to 0.5 °C below the target.
+- Inside that band the pump does not change. A noisy sensor will not chatter it.
+- With the pump off, the card says **Idle**. With the pump on, it says **Cooling**.
+- **Fan only** and **Off** do not cycle the pump.
+
+If the sensor has no reading when you select **Cool**, the fan and the pump turn on and stay that way until a reading arrives. If the room never falls to the target, which is normal for evaporative cooling, the pump stays on.
+
+Selecting **Cool** does not resume by itself. A restart while the fan is off, or turning the unit off on the remote, sets the mode to **Off**. Select **Cool** again to run.
+
+The **Cooling** switch still writes the pump directly. Outside the band, the next sensor update in **Cool** puts the pump back. Inside the band, that switch holds until the room leaves the band.
+
+## Other entities
+
+- **Cooling**. The pump. On the climate card, **Cool** and **Fan only** already set this. With a room sensor, **Cool** keeps writing it to hold the target.
+- **Light**. The courtesy light. Current hardware ignores this bit. It is still sent so a power write does not clear it.
+- **Water level**. Power-frame byte 5 is `0` for an empty tank and `1` when it has water. Those are the only values seen on the Camper. Neil Connect 2.2.0 stores the byte as `waterLevel` and no screen reads it. The pump row caption **DEPÓSITO VACÍO** is fixed text. A power write puts a constant `1` in that byte, so an echoed command is not a tank reading. Any other value shows as unknown.
+- **Timer hours**, a slider from 0 to 5. The app calls this sleep mode (**MODO ESPERA**) and labels `1h` through `5h`. `0` turns the timer off. `1`–`5` send `setTimer(on, hours)`. Byte 2 of the timer frame is `sleepSelectedHour`, and the app copies that byte back onto the slider. The app itself turns sleep mode off with a separate standby control.
+- **Timer remaining hours**, a sensor of timer byte 3. The app names that byte `sleepCurrentHour`, stores it, and does not show it. It is not confirmed to be hours remaining.
+- **Signal strength**, a diagnostic sensor, disabled by default. Enable it from the device page. It is the Bluetooth scanner's last advertisement RSSI in dBm. The climatizador does not send it. A held connection can stop advertisements, so the value may sit still until the next one.
+
+The integration polls every 30 seconds and holds the GATT connection until the config entry is unloaded.
 
 Firmware opcodes exist in the app and are unused here. There is no firmware entity.
 

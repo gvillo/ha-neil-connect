@@ -168,7 +168,7 @@ class NeilConnectConfigFlow(ConfigFlow, domain=DOMAIN):
     def async_get_options_flow(
         config_entry: ConfigEntry,
     ) -> NeilConnectOptionsFlow:
-        """Room temperature is optional and is not sent to the device."""
+        """Room sensor. When set, Cool cycles the pump around a target."""
         return NeilConnectOptionsFlow()
 
 
