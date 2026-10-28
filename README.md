@@ -44,15 +44,15 @@ The catalog is [Neil climatizadores](https://neil.com.ar/productos/). The integr
 
 | Model | Status |
 | --- | --- |
-| [Maxiclima Essence](https://neil.com.ar/productos/essence/) | Not supported |
-| [Neil Master](https://neil.com.ar/productos/master/) | Not supported |
-| [Neil Slim Full](https://neil.com.ar/productos/slim-full/) | Expected |
-| [Neil Camper](https://neil.com.ar/productos/camper/) | Tested |
-| [Neil Camper Patagonia](https://neil.com.ar/productos/camperpatagonia/) | Expected |
-| [Neil Camper Solar](https://neil.com.ar/productos/camper-solar/) | Expected |
-| [Neil Premium 700](https://neil.com.ar/productos/premium-700/) | Expected |
-| [Aires acondicionados](https://neil.com.ar/aa/) | Not supported |
-| [Calderas](https://neil.com.ar/caldera/) | Not supported |
+| [Maxiclima Essence](https://neil.com.ar/productos/essence/) | ❌ Not supported |
+| [Neil Master](https://neil.com.ar/productos/master/) | ❌ Not supported |
+| [Neil Slim Full](https://neil.com.ar/productos/slim-full/) | 🟡 Expected |
+| [Neil Camper](https://neil.com.ar/productos/camper/) | ✅ Tested |
+| [Neil Camper Patagonia](https://neil.com.ar/productos/camperpatagonia/) | 🟡 Expected |
+| [Neil Camper Solar](https://neil.com.ar/productos/camper-solar/) | 🟡 Expected |
+| [Neil Premium 700](https://neil.com.ar/productos/premium-700/) | 🟡 Expected |
+| [Aires acondicionados](https://neil.com.ar/aa/) | ❌ Not supported |
+| [Calderas](https://neil.com.ar/caldera/) | ❌ Not supported |
 
 Essence and Master climatizadores, [Aires acondicionados](https://neil.com.ar/aa/) and [calderas](https://neil.com.ar/caldera/) do not include the Neil Connect controller. Neil's page for Slim Full 24 V lists a Premium controller instead of Connect. Slim Full 12 V, Camper, Camper Patagonia, Camper Solar, and Premium 700 are listed with Connect.
 
