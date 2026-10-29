@@ -112,12 +112,12 @@ The Camper manual calls for preventive maintenance every 300 hours of use, and a
 The procedure is page 11 of the [manual](manuals/Manual-de-Uso-e-Instalacion-Linea-Slim-_ARG_V02-Connect.pdf). The repair lists those six steps. [Neil's maintenance page](https://neil.com.ar/soporte-tecnico/mantenimiento/) stays linked from the repair. [`manuals/mantenimiento/`](manuals/mantenimiento/index.html) is a local copy of that page, including its images and videos.
 
 - **Operating hours**. Total fan runtime since counting started.
-- **Maintenance remaining**. Counts down from 12 days 12 hours (300 h). The unit is days, so Home Assistant shows it as days and hours. At 0 the service repair opens.
-- **Filter remaining**. Counts down from 37 days 12 hours (900 h), shown the same way. At 0 the filter repair opens.
+- **Maintenance remaining**. Counts down from 300 h. At 0 the maintenance repair opens.
+- **Filter remaining**. Counts down from 900 h. At 0 the filter repair opens.
 - **Maintenance**. On when the 300 h service is due. Home Assistant raises a repair with the steps.
 - **Evaporator filter**. On when the filter replacement is due. Home Assistant raises a repair.
-- **Reset maintenance**. Sets Maintenance remaining back to 12 days 12 hours.
-- **Reset filter replacement and maintenance**. Sets Filter remaining back to 37 days 12 hours and Maintenance remaining back to 12 days 12 hours. Replacing the filter is part of that same service.
+- **Reset maintenance**. Sets Maintenance remaining back to 300 h.
+- **Reset filter replacement and maintenance**. Sets Filter remaining back to 900 h and Maintenance remaining back to 300 h. Replacing the filter is part of that same service.
 
 A poll gap longer than 5 minutes is not counted. Time while Home Assistant is stopped is not counted. The courtesy light does not count. The pump does not count unless the fan is on.
 

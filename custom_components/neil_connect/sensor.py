@@ -29,18 +29,6 @@ from .coordinator import NeilConfigEntry, NeilCoordinator, NeilEntity
 from .maintenance import NeilMaintenanceEntity, hours_left, interval_attributes
 
 
-def _days_for_duration(hours: float) -> float:
-    """Days, rounded to the hour, for a duration sensor shown as days and hours.
-
-    Home Assistant floors the fraction of a day into hours. A raw hours/24
-    float sometimes lands just under an hour boundary and that hour disappears.
-    Raising the value to the next 0.0001 day stays inside the same hour.
-    """
-    whole_hours = int(hours + 0.5)
-    scaled = (whole_hours * 10000 + 23) // 24
-    return scaled / 10000
-
-
 async def async_setup_entry(
     hass: HomeAssistant,
     entry: NeilConfigEntry,
@@ -210,32 +198,24 @@ class NeilOperatingHoursSensor(NeilRuntimeSensor):
 
 
 class NeilCountdownSensor(NeilDurationSensor):
-    """Time left until a maintenance interval, shown as days and hours.
-
-    A duration whose unit is days is rendered as days and hours. One whose
-    unit is hours is rendered as hours and minutes.
-    """
+    """Hours left until a maintenance interval. Counts down."""
 
     _attr_state_class = SensorStateClass.MEASUREMENT
-    _attr_native_unit_of_measurement = UnitOfTime.DAYS
-    _attr_suggested_unit_of_measurement = UnitOfTime.DAYS
-    # Four decimals keeps the hour when Home Assistant splits a day into days and hours.
-    _attr_suggested_display_precision = 4
 
     @override
     async def async_added_to_hass(self) -> None:
-        """Drop the hours unit Home Assistant kept when these sensors moved to days."""
+        """Restore hours. Home Assistant kept days from the previous unit."""
         await super().async_added_to_hass()
         registry_entry = self.registry_entry
         if registry_entry is None:
             return
         private = registry_entry.options.get("sensor.private", {})
-        if private.get("suggested_unit_of_measurement") == UnitOfTime.DAYS:
+        if private.get("suggested_unit_of_measurement") in (None, UnitOfTime.HOURS):
             return
         self.registry_entry = er.async_get(self.hass).async_update_entity_options(
             registry_entry.entity_id,
             "sensor.private",
-            {"suggested_unit_of_measurement": UnitOfTime.DAYS},
+            {"suggested_unit_of_measurement": UnitOfTime.HOURS},
         )
 
 
@@ -254,10 +234,8 @@ class NeilServiceHoursSensor(NeilCountdownSensor):
     @property
     @override
     def native_value(self) -> float:
-        """Remaining service time in days, rounded to the nearest hour."""
-        return _days_for_duration(
-            hours_left(self.maintenance.service_hours, SERVICE_INTERVAL_HOURS)
-        )
+        """300 h minus fan time since the last maintenance reset."""
+        return hours_left(self.maintenance.service_hours, SERVICE_INTERVAL_HOURS)
 
     @property
     @override
@@ -281,10 +259,8 @@ class NeilFilterHoursSensor(NeilCountdownSensor):
     @property
     @override
     def native_value(self) -> float:
-        """Remaining filter time in days, rounded to the nearest hour."""
-        return _days_for_duration(
-            hours_left(self.maintenance.filter_hours, FILTER_INTERVAL_HOURS)
-        )
+        """900 h minus fan time since the last filter reset."""
+        return hours_left(self.maintenance.filter_hours, FILTER_INTERVAL_HOURS)
 
     @property
     @override
